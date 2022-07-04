@@ -1,0 +1,1 @@
+python -m PyInstaller --onefile --distpath "." --clean .\tool_forwaring_mail.py
