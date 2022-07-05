@@ -38,6 +38,7 @@ print(f"NUM_WORKER: {NUM_WORKER}")
 pool = ThreadPoolExecutor(max_workers=NUM_WORKER)
 
 options = Options()
+options.set_preference('intl.accept_languages', 'en-GB')
 options.headless = False
 
 data = pd.DataFrame(excel_data, columns=['email', 'password', 'email_protect'])
@@ -109,23 +110,6 @@ def enter_email_forwarding(browser, email_protect_text):
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("i")
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("v")
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("e")
-    return browser
-
-
-def add_mail_forwarding(browser):
-    browser.get("https://outlook.live.com/mail/0/options/mail/layout")
-    while 1:
-        try:
-            WebDriverWait(browser, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
-            break
-        except:
-            pass
-    try:
-        WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-    except Exception as e:
-        pass
-    browser = enter_email_forwarding(browser, email_protect_text)
     return browser
 
 
@@ -395,7 +379,7 @@ def process(account):
             except Exception as e:
                 print("Exception23: ", e)
                 status = "Error: web can't loaded"
-                print("Truong hop 2-3 bi loi", email)
+                print("Truong hop 2-3 bi loi", email_text)
 
     browser.close()
     results.append([email_text, password_text, email_protect_text, status])
