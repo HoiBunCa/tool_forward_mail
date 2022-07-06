@@ -30,18 +30,18 @@ excel_data2 = pd.read_excel(args.data, "Mail_Main")
 MAIN_EMAIL = excel_data2['main_email'][0]
 MAIN_EMAIL_PASSWORD = excel_data2['main_password'][0]
 NUM_WORKER = excel_data2['nums_worker'][0]
-PATH_FIREFOX = excel_data2['path_firefox'][0]
+# PATH_FIREFOX = excel_data2['path_firefox'][0]
 
 print(f"MAIN_EMAIL: {MAIN_EMAIL}")
 print(f"MAIN_EMAIL_PASSWORD: {MAIN_EMAIL_PASSWORD}")
 print(f"NUM_WORKER: {NUM_WORKER}")
-print(f"PATH_FIREFOX: {PATH_FIREFOX}")
+# print(f"PATH_FIREFOX: {PATH_FIREFOX}")
 
 pool = ThreadPoolExecutor(max_workers=NUM_WORKER)
 
 options = Options()
 options.set_preference('intl.accept_languages', 'en-GB')
-options.binary_location = r"{}".format(PATH_FIREFOX)
+# options.binary_location = r"{}".format(PATH_FIREFOX)
 options.headless = True
 
 data = pd.DataFrame(excel_data, columns=['email', 'password', 'email_protect'])
@@ -69,12 +69,13 @@ def process_security_email(browser, email_protect_text):
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs"))).click()
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCS_ProofConfirmation"))).send_keys(email_protect_text)
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCS_SendCode"))).click()
-    while 1:
+    for i in range(10):
+        time.sleep(2)
         code = get_verify_code(mail=email_protect_text, seen=False)
         print("process_security_email:", code)
-        if code is not None:
+        if code is not None and code != -1:
             break
-        time.sleep(2)
+
 
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCC_OTC"))).send_keys(code)
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCC_Continue"))).click()
@@ -88,19 +89,20 @@ def process_security_email(browser, email_protect_text):
 def add_mail_protect(browser, email_protect_text):
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "EmailAddress"))).send_keys(email_protect_text)
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
-    while 1:
+    for i in range(10):
+        time.sleep(2)
         code = get_verify_code(mail=email_protect_text, seen=False)
         print("add_mail_protect", code)
-        if code is not None:
+        if code is not None and code != -1:
             break
-        time.sleep(2)
+
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
     return browser
 
 
 def enter_email_forwarding(browser, email_protect_text):
-    while 1:
+    for i in range(10):
         try:
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']"))).click()
             break
@@ -125,7 +127,7 @@ def enter_email_forwarding(browser, email_protect_text):
 
 def process_code_verify(browser, phone_num_id, nums0=0, nums1=0):
     try:
-        time.sleep(3)
+        time.sleep(5)
         phone_code_verify, reponse_code = get_code(phone_num_id)
         print("nums get phone111: ", nums0, nums1, phone_num_id, reponse_code)
         if reponse_code == 0:
@@ -136,8 +138,11 @@ def process_code_verify(browser, phone_num_id, nums0=0, nums1=0):
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//input"))).clear()
             time.sleep(2)
             phone_num1, phone_num_id1 = get_phone()
+            print("rebuy_phone_th1", phone_num1, phone_num_id1)
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(phone_num1)
+            print("re_click_th1_start_send_code: ")
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
+            print("re_click_th1_end_send_code: ")
 
             return process_code_verify(browser, phone_num_id1, nums0, nums1 + 1)
         if reponse_code == -1:
@@ -152,7 +157,7 @@ def process_code_verify(browser, phone_num_id, nums0=0, nums1=0):
 
 def process_code_verify23(browser, phone_num_id, nums0=0, nums1=0):
     try:
-        time.sleep(3)
+        time.sleep(5)
         phone_code_verify, reponse_code = get_code(phone_num_id)
         print("nums get phone2323: ", nums0, nums1, phone_num_id, reponse_code)
 
@@ -167,7 +172,9 @@ def process_code_verify23(browser, phone_num_id, nums0=0, nums1=0):
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
             phone_num1, phone_num_id1 = get_phone()
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(phone_num1)
+            print("re_click_th23_start_send_code: ", phone_num1, phone_num_id1)
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
+            print("re_click_th23_end_send_code: ", phone_num1, phone_num_id1)
 
             return process_code_verify23(browser, phone_num_id1, nums0, nums1 + 1)
         if reponse_code == -1:
@@ -208,9 +215,12 @@ def process(account):
 
         WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
         phone_num, phone_num_id = get_phone()
-        print("SDT truong hop 1:", phone_num)
+        print("SDT truong hop 1:", phone_num, phone_num_id, email_text)
         WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(phone_num)
+        print("th1_start_send_code: ", email_text)
         WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
+        print("th1_end_send_code: ", email_text)
+
 
         phone_code_verify = process_code_verify(browser, phone_num_id, 0, 0)
         print("phone_code_verify th1: ", phone_code_verify)
@@ -290,12 +300,13 @@ def process(account):
 
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "EmailAddress"))).send_keys(email_protect_text)
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
-            while 1:
+            for i in range(10):
+                time.sleep(2)
                 code = get_verify_code(mail=email_protect_text, seen=False)
                 print("get_verify_code lan 1: ", code)
-                if code is not None:
+                if code is not None and code != -1:
                     break
-                time.sleep(2)
+
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
 
@@ -303,11 +314,11 @@ def process(account):
                 WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs"))).click()
                 WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCS_ProofConfirmation"))).send_keys(email_protect_text)
                 WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCS_SendCode"))).click()
-                while 1:
+                for i in range(10):
                     time.sleep(2)
                     code1 = get_verify_code(mail=email_protect_text, seen=False)
                     print("get_verify_code lan 2", code1)
-                    if code1 is not None:
+                    if code1 is not None and code1 != -1:
                         break
 
                 WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCC_OTC"))).send_keys(code1)
@@ -320,20 +331,27 @@ def process(account):
                 pass
 
             time.sleep(3)
-            while 1:
+            for i in range(10):
                 try:
                     browser.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
                     WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
                     break
                 except:
                     pass
+            try:
+                WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneCountryISO"))).click()
+            except:
+                browser.close()
+                results.append([email_text, password_text, email_protect_text, "Error: Khong hien len trang thong tin mail"])
+                return
 
-            WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneCountryISO"))).click()
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
             phone_num, phone_num_id = get_phone()
             print("SDT truong hop 2-3: ", phone_num, phone_num_id)
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(phone_num)  # nhap sdt
+            print("th23_start_send_code: ", email_text)
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
+            print("th23_end_send_code: ", email_text)
 
             phone_code_verify = process_code_verify23(browser, phone_num_id, 0, 0)
             print("phone_code_verify th 2-3: ", phone_code_verify)
@@ -379,7 +397,7 @@ def process(account):
                 WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
 
                 time.sleep(3)
-                while 1:
+                for i in range(10):
                     try:
                         browser.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
                         WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.ID, "idRemoveAssocPhone"))).click()
@@ -397,8 +415,7 @@ def process(account):
 
     browser.close()
     results.append([email_text, password_text, email_protect_text, status])
-    print("INFO: ", email_text, password_text, email_protect_text, status)
-    # time.sleep(3)
+    print("RESULTS: ", results)
 
 
 if __name__ == '__main__':
