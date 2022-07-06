@@ -137,7 +137,7 @@ def process_code_verify(browser, phone_num_id, nums0=0, nums1=0):
             time.sleep(2)
             phone_num1, phone_num_id1 = get_phone()
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(phone_num1)
-            WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).send_keys(phone_num1)
+            WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
 
             return process_code_verify(browser, phone_num_id1, nums0, nums1 + 1)
         if reponse_code == -1:
@@ -210,7 +210,7 @@ def process(account):
         phone_num, phone_num_id = get_phone()
         print("SDT truong hop 1:", phone_num)
         WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(phone_num)
-        WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).send_keys(phone_num)
+        WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
 
         phone_code_verify = process_code_verify(browser, phone_num_id, 0, 0)
         print("phone_code_verify th1: ", phone_code_verify)
