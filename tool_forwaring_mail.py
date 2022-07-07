@@ -146,7 +146,7 @@ def process():
             print("phone_code_verify: ", phone_code_verify)
             if phone_code_verify is None:
                 browser.close()
-                results.append([email, password, email_protect, "Khong thue duoc sdt"])
+                results.append([email, password, email_protect, "Chua thue dc sdt"])
                 continue
 
             WebDriverWait(browser, 10).until(EC.element_to_be_clickable((By.XPATH, "//input[@aria-label='Enter the access code']"))).send_keys(phone_code_verify)
@@ -294,7 +294,7 @@ def process():
                 phone_code_verify = process_code_verify23(phone_num_id, 0, 0)
                 if phone_code_verify is None:
                     browser.close()
-                    results.append([email, password, email_protect, "Khong thue duoc sdt"])
+                    results.append([email, password, email_protect, "Chua thue dc sdt"])
                     continue
 
                 WebDriverWait(browser, 120).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(phone_code_verify)  # nhap code
