@@ -30,17 +30,17 @@ excel_data2 = pd.read_excel(args.data, "Mail_Main")
 MAIN_EMAIL = excel_data2['main_email'][0]
 MAIN_EMAIL_PASSWORD = excel_data2['main_password'][0]
 NUM_WORKER = excel_data2['nums_worker'][0]
-PATH_FIREFOX = excel_data2['path_firefox'][0]
+# PATH_FIREFOX = excel_data2['path_firefox'][0]
 
 print(f"MAIN_EMAIL: {MAIN_EMAIL}")
 print(f"MAIN_EMAIL_PASSWORD: {MAIN_EMAIL_PASSWORD}")
 print(f"NUM_WORKER: {NUM_WORKER}")
-print(f"PATH_FIREFOX: {PATH_FIREFOX}")
+# print(f"PATH_FIREFOX: {PATH_FIREFOX}")
 
 options = Options()
 options.set_preference('intl.accept_languages', 'en-GB')
 options.set_preference("permissions.default.image", 2)
-options.binary_location = r"{}".format(PATH_FIREFOX)
+# options.binary_location = r"{}".format(PATH_FIREFOX)
 
 # options.headless = True
 # pool = ThreadPoolExecutor(max_workers=NUM_WORKER)
@@ -96,15 +96,17 @@ def login_with_account(email_text, password_text):
 
 
 def get_verify_code(mail: str, seen: bool):
-    print("MAIL:::::: ", mail)
-    with MailBox('imap.yandex.com').login(MAIN_EMAIL, MAIN_EMAIL_PASSWORD) as mailbox:
-        for msg in mailbox.fetch(criteria=AND(seen=seen, to=mail), reverse=True):
-            page = HTML(html=str(msg.html))
-            codes = page.xpath('//tr/td/span//text()')
-            if len(codes):
-                return codes[0]
-            else:
-                return -1
+    with MailBox('imap.yandex.com').login(MAIN_EMAIL, MAIN_EMAIL_PASSWORD, initial_folder='INBOX') as mailbox:
+        for msg in mailbox.fetch(criteria=AND(to=mail), reverse=True):
+
+            if msg.to[0] == mail:
+                page = HTML(html=str(msg.html))
+                codes = page.xpath('//tr/td/span//text()')
+                mailbox.delete([msg.uid])
+                if len(codes):
+                    return codes[0]
+                else:
+                    return -1
 
 
 def process_security_email(browser, email_protect_text):
@@ -528,17 +530,12 @@ def process(account):
                                 time.sleep(3)
                                 browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
                                 time.sleep(3)
+                                process_security_email(browser, email_protect_text)
                             except:
                                 print("Chua hoan thanh add_mail_protect hoac add_mail_protect ko xuat hien: ",
                                       email_protect_text)
                                 pass
 
-                            try:
-                                process_security_email(browser, email_protect_text)
-                            except Exception as e:
-                                print(
-                                    "Chua hoan thanh process_security_email lan 1 hoac process_security_email ko xuat hien: ",
-                                    email_protect_text)
                         else:
                             browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
                             time.sleep(3)
