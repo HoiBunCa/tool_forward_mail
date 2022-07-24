@@ -8,6 +8,9 @@ import sqlite3
 import pandas as pd
 from datetime import datetime
 from imap_tools import MailBox, AND
+import imaplib
+import email
+
 from requests_html import HTML
 
 from selenium.webdriver.support.wait import WebDriverWait
@@ -55,6 +58,7 @@ for ind, row in data.iterrows():
     emails.append([row['email'], row['password'], row['email_protect']])
 
 results = []
+print("TIME START: ", time.time())
 
 
 def get_phone():
@@ -95,18 +99,44 @@ def login_with_account(email_text, password_text):
     return browser
 
 
-def get_verify_code(mail: str, seen: bool):
-    with MailBox('imap.yandex.com').login(MAIN_EMAIL, MAIN_EMAIL_PASSWORD, initial_folder='INBOX') as mailbox:
-        for msg in mailbox.fetch(criteria=AND(to=mail), reverse=True):
+def get_verify_code(mail, seen):
+    codes = None
+    body = ''
+    imap_server = imaplib.IMAP4_SSL(host='imap.yandex.com')
+    imap_server.login(MAIN_EMAIL, MAIN_EMAIL_PASSWORD)
+    imap_server.select("INBOX")
+    if seen:
+        _, message_numbers_raw = imap_server.search(None, f'TO {mail}')
+    else:
+        _, message_numbers_raw = imap_server.search(None, f'TO {mail} UNSEEN')
 
-            if msg.to[0] == mail:
-                page = HTML(html=str(msg.html))
-                codes = page.xpath('//tr/td/span//text()')
-                mailbox.delete([msg.uid])
-                if len(codes):
-                    return codes[0]
-                else:
-                    return -1
+    res, msg = imap_server.fetch(message_numbers_raw[0].split()[-1], "(RFC822)")
+    for response in msg:
+        if isinstance(response, tuple):
+            msg = email.message_from_bytes(response[1])
+
+            if msg.is_multipart():
+                for part in msg.walk():
+
+                    try:
+                        body = part.get_payload(decode=True).decode()
+                    except:
+                        body = ''
+            else:
+                try:
+                    body = msg.get_payload(decode=True).decode()
+                except:
+                    body = ''
+            try:
+                page = HTML(html=str(body))
+                codes = page.xpath('//tr/td/span//text()')[0]
+            except:
+                pass
+    imap_server.store(message_numbers_raw[0].split()[-1], "+FLAGS", "\\Seen")
+    imap_server.expunge()
+    imap_server.close()
+    imap_server.logout()
+    return codes
 
 
 def process_security_email(browser, email_protect_text):
@@ -116,10 +146,13 @@ def process_security_email(browser, email_protect_text):
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCS_SendCode"))).click()
     for i in range(50):
         time.sleep(2)
-        code = get_verify_code(mail=email_protect_text, seen=False)
-        print("process_security_email:::", code, email_protect_text)
-        if code is not None and code != -1:
-            break
+        try:
+            code = get_verify_code(mail=email_protect_text, seen=False)
+            print("process_security_email:::", code, email_protect_text)
+            if code is not None:
+                break
+        except:
+            pass
 
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCC_OTC"))).send_keys(code)
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCC_Continue"))).click()
@@ -146,13 +179,17 @@ def add_mail_protect(browser, email_protect_text):
     print("MAIL::: ", email_protect_text)
     for i in range(20):
         time.sleep(2)
-        code = get_verify_code(mail=email_protect_text, seen=False)
-        print("add_mail_protect::: ", code)
-        if code is not None and code != -1:
-            break
+        try:
+            code = get_verify_code(mail=email_protect_text, seen=False)
+            print("add_mail_protect::: ", code)
+            if code is not None and code != -1:
+                break
+        except:
+            pass
 
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
+    print("add_mail_protect done ::: ", email_protect_text)
     return browser
 
 
@@ -361,8 +398,12 @@ def process(account):
     mail_used = check_mail_used(email_text)
     if mail_used == "Mail used":
         status = "forwarded"
+        print("forwarded: ", email_text)
     else:
+
         browser = login_with_account(email_text, password_text)
+        print("LOGIN SUCCESS")
+
         # time.sleep(8)
         WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
         if "We've detected something unusual about this sign-in. For example, you might be signing in from a new location, device or app." in browser.page_source:
@@ -476,6 +517,7 @@ def process(account):
                         WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
                         browser = process_security_email(browser, email_protect_text)
                     except Exception as e:
+
                         pass
                     try:
                         WebDriverWait(browser, 1).until(
@@ -508,6 +550,7 @@ def process(account):
                     try:
                         WebDriverWait(browser, 100).until(
                             EC.element_to_be_clickable((By.XPATH, "//*[text()='Sign in']"))).click()
+                        time.sleep(5)
                     except:
                         print("Can't click sign in")
                     # WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
@@ -528,23 +571,29 @@ def process(account):
                             try:
                                 add_mail_protect(browser, email_protect_text)
                                 time.sleep(3)
+
+                                print("cccccccccc: ", email_protect_text)
                                 browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-                                time.sleep(3)
+
                                 process_security_email(browser, email_protect_text)
+                                time.sleep(3)
+                                print("Hoan thanh add email protect ", email_protect_text)
                             except:
-                                print("Chua hoan thanh add_mail_protect hoac add_mail_protect ko xuat hien: ",
-                                      email_protect_text)
+                                print("Chua hoan thanh add_mail_protect: ", email_protect_text)
+
                                 pass
 
                         else:
+                            print("Nhap mail bao ve: ", email_protect_text)
                             browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
                             time.sleep(3)
                             WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
                             try:
                                 process_security_email(browser, email_protect_text)
+                                print("Hoan thanh process_security_email: ", email_protect_text)
                             except Exception as e:
                                 print(
-                                    "Chua hoan thanh process_security_email lan 1 hoac process_security_email ko xuat hien: ",
+                                    "Chua hoan thanh process_security_email: ",
                                     email_protect_text)
                                 pass
 
@@ -562,8 +611,14 @@ def process(account):
 
                         browser.get(
                             "https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
-                        WebDriverWait(browser, 100).until(
-                            EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
+                        for i in range(10):
+                            try:
+                                WebDriverWait(browser, 30).until(
+                                    EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
+                                break
+                            except:
+                                browser.get(
+                                    "https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
                         WebDriverWait(browser, 100).until(
                             EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
                         phone_num_th23, phone_num_id_th23 = get_phone()
@@ -588,26 +643,19 @@ def process(account):
 
                     else:
                         print("Da thue duoc so dien thoai", email_text)
-                    print("aaaaaaa")
+
                     browser.close()
                     browser = login_with_account(email_text, password_text)
-                    print("bbbbbbb")
                     time.sleep(2)
                     browser.get("https://outlook.live.com/mail/0/options/mail/layout")
-                    print("ccccccc")
                     WebDriverWait(browser, 60).until(
                         EC.element_to_be_clickable((By.XPATH, "//*[text()='Sign in']"))).click()
-                    print("dddddddd")
                     WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
-                    print("eeeeeeeee")
                     browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
                     time.sleep(3)
-                    print("ffffffffff")
                     WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
                     browser = process_security_email(browser, email_protect_text)
-                    print("ggggggggg")
                     WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
-                    print("hhhhhhhh")
                     browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
                     time.sleep(3)
 
