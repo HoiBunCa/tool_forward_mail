@@ -140,6 +140,7 @@ def get_verify_code(mail, seen):
 
 
 def process_security_email(browser, email_protect_text):
+    code = ""
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs"))).click()
     WebDriverWait(browser, 100).until(
         EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCS_ProofConfirmation"))).send_keys(email_protect_text)
@@ -174,6 +175,7 @@ def process_security_email(browser, email_protect_text):
 
 
 def add_mail_protect(browser, email_protect_text):
+    code = ""
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "EmailAddress"))).send_keys(email_protect_text)
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
     print("MAIL::: ", email_protect_text)
@@ -712,6 +714,7 @@ def page_has_loaded(browser):
 
 
 def reactive_mail(browser, email_protect_text):
+    code = ""
     WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
         email_protect_text.split("@")[0])
     WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()
@@ -727,6 +730,7 @@ def reactive_mail(browser, email_protect_text):
 
 
 def reactive_mail2(browser, email_protect_text):
+    code = ""
     WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
         email_protect_text.split("@")[0])
     WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()

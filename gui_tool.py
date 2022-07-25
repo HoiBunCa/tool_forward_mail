@@ -30,12 +30,13 @@ class MyWindow:
         self.main_email_password = "Team123@"
         self.api_key = "3fbef40e"
         self.num_worker = 1
+        self.HEADLESS = True
 
         # config selenium
         self.options = Options()
         self.options.set_preference('intl.accept_languages', 'en-GB')
         self.options.set_preference("permissions.default.image", 2)
-        self.options.headless = False
+        self.options.headless = self.HEADLESS
 
         self.lbl1 = Label(win, text='File data')
         self.lbl1.place(x=50, y=50)
@@ -62,10 +63,19 @@ class MyWindow:
         self.NUM_WORKER = Entry(bd=3, width=30)
         self.NUM_WORKER.place(x=200, y=250)
 
+        self.var = IntVar()
+        self.lbl6 = Label(win, text='Headless')
+        self.lbl6.place(x=50, y=300)
+        self.HEADLESS_TRUE = Radiobutton(win, text="True", variable=self.var, value=True, command=self.sel)
+        self.HEADLESS_TRUE.place(x=200, y=300)
+        self.HEADLESS_FALSE = Radiobutton(win, text="False", variable=self.var, value=False, command=self.sel)
+        self.HEADLESS_FALSE.place(x=350, y=300)
+
+
         self.processBtn = Button(win, text='Process', command=self.main, state=DISABLED)
-        self.processBtn.place(x=200, y=300)
+        self.processBtn.place(x=200, y=350)
         self.resultsLabel = Label(win, text='')
-        self.resultsLabel.place(x=300, y=300)
+        self.resultsLabel.place(x=300, y=350)
 
         self.b2 = Button(win, text='Open file', command=lambda: self.open_file())
         self.b2.place(x=200, y=50)
@@ -74,6 +84,12 @@ class MyWindow:
         self.thread_check_fill_data = Thread(target=self.check_input_fill)
         self.thread_check_fill_data.daemon = True
         self.thread_check_fill_data.start()
+
+    def sel(self):
+        if self.var.get():
+            self.HEADLESS = True
+        else:
+            self.HEADLESS = False
 
     def open_file(self):
         file = askopenfile(mode='r', filetypes=[('Python Files', '*.xlsx')])
@@ -165,6 +181,7 @@ class MyWindow:
         return codes
 
     def process_security_email(self, browser, email_protect_text):
+        code = ""
         WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs"))).click()
         WebDriverWait(browser, 100).until(
             EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCS_ProofConfirmation"))).send_keys(email_protect_text)
@@ -198,6 +215,7 @@ class MyWindow:
         return browser
 
     def add_mail_protect(self, browser, email_protect_text):
+        code = ""
         WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "EmailAddress"))).send_keys(
             email_protect_text)
         WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
@@ -345,7 +363,7 @@ class MyWindow:
                         pass
                     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).clear()
                     time.sleep(2)
-                    phone_num1, phone_num_id1 = self.get_phone()
+                    phone_num1, phone_num_id1 = self.get_phone(self.API_KEY)
                     print("rebuy_phone_th1", phone_num1, phone_num_id1)
                     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(
                         phone_num1)
@@ -376,7 +394,7 @@ class MyWindow:
                         EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
                     WebDriverWait(browser, 100).until(
                         EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
-                    phone_num1, phone_num_id1 = self.get_phone()
+                    phone_num1, phone_num_id1 = self.get_phone(self.API_KEY)
                     print("rebuy_SDT truong hop 2-3: ", phone_num1, phone_num_id1)
                     WebDriverWait(browser, 100).until(
                         EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
@@ -462,8 +480,9 @@ class MyWindow:
 
                     print("gap truong hop 1 chua lam: ", email_text)
                     try:
-                        WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
-                        phone_num, phone_num_id = self.get_phone()
+                        WebDriverWait(browser, 100).until(
+                            EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
+                        phone_num, phone_num_id = self.get_phone(self.API_KEY)
                         print("SDT truong hop 1: ", phone_num, phone_num)
                         WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(
                             phone_num)
@@ -618,7 +637,7 @@ class MyWindow:
                                         "https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
                             WebDriverWait(browser, 100).until(
                                 EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
-                            phone_num_th23, phone_num_id_th23 = self.get_phone()
+                            phone_num_th23, phone_num_id_th23 = self.get_phone(self.API_KEY)
                             print("SDT truong hop 2-3: ", phone_num_th23, phone_num_id_th23)
                             WebDriverWait(browser, 100).until(
                                 EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
@@ -710,6 +729,7 @@ class MyWindow:
         return page_state == 'complete'
 
     def reactive_mail(self, browser, email_protect_text):
+        code = ""
         WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
             email_protect_text.split("@")[0])
         WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()
@@ -724,6 +744,7 @@ class MyWindow:
         WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iVerifyCodeAction"))).click()
 
     def reactive_mail2(self, browser, email_protect_text):
+        code = ""
         WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
             email_protect_text.split("@")[0])
         WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()
@@ -739,7 +760,8 @@ class MyWindow:
 
     def check_input_fill(self):
         while True:
-            if len(self.MAIN_EMAIL.get()) and len(self.MAIN_EMAIL_PASSWORD.get()) and len(self.API_KEY.get()) and len(self.NUM_WORKER.get()):
+            if len(self.MAIN_EMAIL.get()) and len(self.MAIN_EMAIL_PASSWORD.get()) and len(self.API_KEY.get()) and len(
+                    self.NUM_WORKER.get()):
                 self.processBtn['state'] = NORMAL
             else:
                 self.processBtn['state'] = DISABLED
@@ -749,6 +771,7 @@ class MyWindow:
         print(self.MAIN_EMAIL_PASSWORD.get())
         print(self.API_KEY.get())
         print(self.NUM_WORKER.get())
+        print(self.HEADLESS)
 
         self.pool = ThreadPoolExecutor(max_workers=int(self.NUM_WORKER.get()))
         if len(self.emails):
@@ -765,5 +788,5 @@ class MyWindow:
 window = Tk()
 mywin = MyWindow(window)
 window.title('Tool Forward Mail')
-window.geometry("500x350+10+10")
+window.geometry("500x400+10+10")
 window.mainloop()
