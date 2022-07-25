@@ -13,7 +13,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.common import TimeoutException
 from selenium.webdriver.firefox.options import Options
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
@@ -22,6 +21,7 @@ from threading import Thread
 
 class MyWindow:
     def __init__(self, win):
+        self.pool = None
         self.win = win
         self.emails = []
         self.results = []
@@ -36,7 +36,6 @@ class MyWindow:
         self.options.set_preference('intl.accept_languages', 'en-GB')
         self.options.set_preference("permissions.default.image", 2)
         self.options.headless = False
-        self.pool = ThreadPoolExecutor(max_workers=1)
 
         self.lbl1 = Label(win, text='File data')
         self.lbl1.place(x=50, y=50)
@@ -751,6 +750,7 @@ class MyWindow:
         print(self.API_KEY.get())
         print(self.NUM_WORKER.get())
 
+        self.pool = ThreadPoolExecutor(max_workers=int(self.NUM_WORKER.get()))
         if len(self.emails):
             future = [self.pool.submit(self.process, mail) for mail in self.emails]
             wait(future)
@@ -760,6 +760,7 @@ class MyWindow:
             self.resultsLabel = Label(self.win, text='DONE!')
             self.resultsLabel.place(x=300, y=300)
         print("DONE!")
+
 
 window = Tk()
 mywin = MyWindow(window)
