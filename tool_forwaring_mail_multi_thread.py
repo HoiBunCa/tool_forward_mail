@@ -21,6 +21,7 @@ from selenium.common import TimeoutException
 from selenium.webdriver.firefox.options import Options
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
+from selenium.webdriver import ActionChains
 
 parser = argparse.ArgumentParser()
 
@@ -45,11 +46,11 @@ options.set_preference('intl.accept_languages', 'en-GB')
 options.set_preference("permissions.default.image", 2)
 # options.binary_location = r"{}".format(PATH_FIREFOX)
 
-# options.headless = True
-# pool = ThreadPoolExecutor(max_workers=NUM_WORKER)
+options.headless = True
+pool = ThreadPoolExecutor(max_workers=NUM_WORKER)
 
-options.headless = False
-pool = ThreadPoolExecutor(max_workers=1)
+# options.headless = False
+# pool = ThreadPoolExecutor(max_workers=1)
 
 data = pd.DataFrame(excel_data, columns=['email', 'password', 'email_protect'])
 
@@ -59,6 +60,55 @@ for ind, row in data.iterrows():
 
 results = []
 print("TIME START: ", time.time())
+
+
+def init_mailbox():
+
+    browser = webdriver.Firefox(options=options)
+    browser.get("https://passport.yandex.ru/auth?retpath=https%3A%2F%2Fmail.yandex.ru%2F&backpath=https%3A%2F%2Fmail.yandex.ru%2F%3Fnoretpath%3D1&from=mail&origin=hostroot_homer_auth_ru")
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-login"))).send_keys("nhanmailao@minh.live")
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-passwd"))).send_keys("Team123@")
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
+    time.sleep(5)
+    browser.get('https://mail.yandex.ru/?uid=1130000057343225#thread/t179862510118279515')
+
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, '//div[contains(@aria-label, "Microsoft account team, Microsoft account security code,")]')))
+    return browser
+
+
+browser_ = init_mailbox()
+
+
+def mask_as_read(browser, code_of_mail):
+    click_Menu = browser.find_element(By.XPATH, f'//div[contains(@aria-label, "{code_of_mail}")]')
+    action = ActionChains(browser)
+    action.context_click(click_Menu).perform()
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, "//span[@class='mail-Toolbar-Item-Text js-toolbar-item-title js-toolbar-item-title-mark-as-read']"))).click()
+
+
+def get_code_by_selenium(browser, mail_input):
+    emails = browser.find_elements(By.XPATH, '//div[contains(@aria-label, "unread, Microsoft account team, Microsoft account security code,")]')
+    print(len(emails))
+
+    code = None
+    mail_s = mail_input.split("@")[0]
+    mail_n = mail_s[0] + mail_s[1] + "**" + mail_s[-1]
+    try:
+        for mail_unread in emails:
+            if mail_n in mail_unread.text:
+                mail_unread_text = mail_unread.text
+                security_code_str = "Security code: "
+                if_you_str = "If you"
+                ind1 = mail_unread_text.find(security_code_str)
+                ind2 = mail_unread_text.find(if_you_str)
+                code = mail_unread_text[ind1 + len(security_code_str): ind2].strip()
+                print("code: ", code, mail_input)
+                mask_as_read(browser, code)
+    except:
+        pass
+
+    return code
 
 
 def get_phone():
@@ -99,46 +149,6 @@ def login_with_account(email_text, password_text):
     return browser
 
 
-def get_verify_code(mail, seen):
-    codes = None
-    body = ''
-    imap_server = imaplib.IMAP4_SSL(host='imap.yandex.com')
-    imap_server.login(MAIN_EMAIL, MAIN_EMAIL_PASSWORD)
-    imap_server.select("INBOX")
-    if seen:
-        _, message_numbers_raw = imap_server.search(None, f'TO {mail}')
-    else:
-        _, message_numbers_raw = imap_server.search(None, f'TO {mail} UNSEEN')
-
-    res, msg = imap_server.fetch(message_numbers_raw[0].split()[-1], "(RFC822)")
-    for response in msg:
-        if isinstance(response, tuple):
-            msg = email.message_from_bytes(response[1])
-
-            if msg.is_multipart():
-                for part in msg.walk():
-
-                    try:
-                        body = part.get_payload(decode=True).decode()
-                    except:
-                        body = ''
-            else:
-                try:
-                    body = msg.get_payload(decode=True).decode()
-                except:
-                    body = ''
-            try:
-                page = HTML(html=str(body))
-                codes = page.xpath('//tr/td/span//text()')[0]
-            except:
-                pass
-    imap_server.store(message_numbers_raw[0].split()[-1], "+FLAGS", "\\Seen")
-    imap_server.expunge()
-    imap_server.close()
-    imap_server.logout()
-    return codes
-
-
 def process_security_email(browser, email_protect_text):
     code = ""
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs"))).click()
@@ -148,12 +158,15 @@ def process_security_email(browser, email_protect_text):
     for i in range(50):
         time.sleep(2)
         try:
-            code = get_verify_code(mail=email_protect_text, seen=False)
+            # code = get_verify_code(mail=email_protect_text, seen=False)
+            code = get_code_by_selenium(browser=browser_, mail_input=email_protect_text)
             print("process_security_email:::", code, email_protect_text)
             if code is not None:
                 break
         except:
             pass
+    if code == "":
+        return browser
 
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCC_OTC"))).send_keys(code)
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCC_Continue"))).click()
@@ -165,7 +178,8 @@ def process_security_email(browser, email_protect_text):
             break
         else:
             pass
-
+    if "The wrong code was entered" in browser.page_source:
+        browser = process_security_email(browser, email_protect_text)
     try:
         WebDriverWait(browser, 3).until(EC.element_to_be_clickable((By.ID, "iCancel"))).click()
     except Exception as e:
@@ -182,12 +196,16 @@ def add_mail_protect(browser, email_protect_text):
     for i in range(20):
         time.sleep(2)
         try:
-            code = get_verify_code(mail=email_protect_text, seen=False)
+            # code = get_verify_code(mail=email_protect_text, seen=False)
+            code = get_code_by_selenium(browser=browser_, mail_input=email_protect_text)
             print("add_mail_protect::: ", code)
             if code is not None and code != -1:
                 break
         except:
             pass
+
+    if code == "":
+        return browser
 
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
@@ -350,7 +368,7 @@ def process_code_verify23(browser, phone_num_id, nums0=0, nums1=0):
 
         if reponse_code == -1:
             if nums0 == 7:
-                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_close"))).click()
+                browser.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
                 WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
                 WebDriverWait(browser, 100).until(
                     EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
@@ -398,7 +416,7 @@ def process(account):
 
     # check email used
     mail_used = check_mail_used(email_text)
-    if mail_used == "Mail used":
+    if mail_used == "Mail usedd":
         status = "forwarded"
         print("forwarded: ", email_text)
     else:
@@ -410,8 +428,7 @@ def process(account):
         WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
         if "We've detected something unusual about this sign-in. For example, you might be signing in from a new location, device or app." in browser.page_source:
             try:
-                # WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iLandingViewAction"))).click()
-                WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
+                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
             except:
                 pass
             reactive_mail(browser, email_protect_text)
@@ -419,7 +436,7 @@ def process(account):
         elif "For your security and to ensure that only you have access to your account, we will ask you to verify your identity and change your password." in browser.page_source:
             WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iLandingViewAction"))).click()
             try:
-                WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
+                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
                 reactive_mail2(browser, email_protect_text)
                 status = "change password"
                 password_text = password_text + "!"
@@ -522,7 +539,7 @@ def process(account):
 
                         pass
                     try:
-                        WebDriverWait(browser, 1).until(
+                        WebDriverWait(browser, 3).until(
                             EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
                     except Exception as e:
                         pass
@@ -533,7 +550,7 @@ def process(account):
                         browser = enter_email_forwarding(browser, email_protect_text)
 
                         status = "success"
-                        insert_db(email_text)
+                        # insert_db(email_text)
                         print("Lam xong truong hop 1: ", email_protect_text)
                     except Exception as e:
                         browser.save_full_page_screenshot(f"html/{email_protect_text.split('@')[0]}.png")
@@ -571,13 +588,15 @@ def process(account):
                     if check_page_loaded:
                         if "Help us protect your account" in browser.page_source:
                             try:
-                                add_mail_protect(browser, email_protect_text)
+                                browser = add_mail_protect(browser, email_protect_text)
                                 time.sleep(3)
 
                                 print("cccccccccc: ", email_protect_text)
                                 browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
+                                print("dddddddddd: ", email_protect_text)
 
-                                process_security_email(browser, email_protect_text)
+                                browser = process_security_email(browser, email_protect_text)
+                                print("eeeeeeeeeeeee: ", email_protect_text)
                                 time.sleep(3)
                                 print("Hoan thanh add email protect ", email_protect_text)
                             except:
@@ -591,7 +610,7 @@ def process(account):
                             time.sleep(3)
                             WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
                             try:
-                                process_security_email(browser, email_protect_text)
+                                browser = process_security_email(browser, email_protect_text)
                                 print("Hoan thanh process_security_email: ", email_protect_text)
                             except Exception as e:
                                 print(
@@ -715,34 +734,40 @@ def page_has_loaded(browser):
 
 def reactive_mail(browser, email_protect_text):
     code = ""
-    WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
         email_protect_text.split("@")[0])
-    WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()
     for i in range(50):
         time.sleep(2)
-        code = get_verify_code(mail=email_protect_text, seen=False)
+        # code = get_verify_code(mail=email_protect_text, seen=False)
+        code = get_code_by_selenium(browser=browser_, mail_input=email_protect_text)
         print("re_active mail: ", code)
-        if code is not None and code != -1:
+        if code is not None:
             break
+    if code == "":
+        return browser
 
-    WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
-    WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iVerifyCodeAction"))).click()
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iVerifyCodeAction"))).click()
 
 
 def reactive_mail2(browser, email_protect_text):
     code = ""
-    WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
         email_protect_text.split("@")[0])
-    WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()
     for i in range(50):
         time.sleep(2)
-        code = get_verify_code(mail=email_protect_text, seen=False)
+        # code = get_verify_code(mail=email_protect_text, seen=False)
+        code = get_code_by_selenium(browser=browser_, mail_input=email_protect_text)
         print("re_active mail: ", code)
-        if code is not None and code != -1:
+        if code is not None:
             break
+    if code == "":
+        return browser
 
-    WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
-    WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "iVerifyCodeAction"))).click()
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iVerifyCodeAction"))).click()
 
 
 if __name__ == '__main__':

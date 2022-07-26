@@ -585,13 +585,13 @@ class MyWindow:
                         if check_page_loaded:
                             if "Help us protect your account" in browser.page_source:
                                 try:
-                                    self.add_mail_protect(browser, email_protect_text)
+                                    browser = self.add_mail_protect(browser, email_protect_text)
                                     time.sleep(3)
 
                                     print("cccccccccc: ", email_protect_text)
                                     browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
 
-                                    self.process_security_email(browser, email_protect_text)
+                                    browser = self.process_security_email(browser, email_protect_text)
                                     time.sleep(3)
                                     print("Hoan thanh add email protect ", email_protect_text)
                                 except:
@@ -605,7 +605,7 @@ class MyWindow:
                                 time.sleep(3)
                                 WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
                                 try:
-                                    self.process_security_email(browser, email_protect_text)
+                                    browser = self.process_security_email(browser, email_protect_text)
                                     print("Hoan thanh process_security_email: ", email_protect_text)
                                 except Exception as e:
                                     print(
