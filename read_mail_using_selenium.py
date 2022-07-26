@@ -6,6 +6,7 @@ from selenium.common import TimeoutException
 from selenium.webdriver.firefox.options import Options
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import wait
+from selenium.webdriver import ActionChains
 import time
 
 options = Options()
@@ -27,18 +28,19 @@ time.sleep(5)
 browser.get('https://mail.yandex.ru/?uid=1130000057343225#thread/t179862510118279515')
 
 
-def page_has_loaded(browser):
-    page_state = browser.execute_script('return document.readyState;')
-    return page_state == 'complete'
-
-
 WebDriverWait(browser, 100).until(EC.element_to_be_clickable(
-    (By.XPATH, '//div[contains(@aria-label, "unread, Microsoft account team, Microsoft account security code,")]')))
+    (By.XPATH, '//div[contains(@aria-label, "Microsoft account team, Microsoft account security code,")]')))
+
+
+def mask_as_read(browser, code_of_mail):
+    click_Menu = browser.find_element(By.XPATH, f'//div[contains(@aria-label, "{code_of_mail}")]')
+    action = ActionChains(browser)
+    action.context_click(click_Menu).perform()
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, "//span[@class='mail-Toolbar-Item-Text js-toolbar-item-title js-toolbar-item-title-mark-as-read']"))).click()
 
 
 def get_code_by_selenium(mail_input):
-    emails = browser.find_elements(By.XPATH,
-                                   '//div[contains(@aria-label, "unread, Microsoft account team, Microsoft account security code,")]')
+    emails = browser.find_elements(By.XPATH, '//div[contains(@aria-label, "unread, Microsoft account team, Microsoft account security code,")]')
     print(len(emails))
 
     code = ""
@@ -51,22 +53,21 @@ def get_code_by_selenium(mail_input):
             if_you_str = "If you"
             ind1 = mail_unread_text.find(security_code_str)
             ind2 = mail_unread_text.find(if_you_str)
-            code = mail_unread_text[ind1 + len(security_code_str): ind2]
+            code = mail_unread_text[ind1 + len(security_code_str): ind2].strip()
             print("code: ", code, mail_input)
-    return code.strip()
+            mask_as_read(browser, code)
+
+    return code
 
 
-list_mail = ["mashekpaganig@minh.live",
-             "tirybeitere@minh.live",
-             "dagatawhitisc@minh.live",
-             "gangwadmany@minh.live",
-             "casanashimol@minh.live"]
+# list_mail = ["dyckvelky4@minh.live"]
 
-options.headless = False
-pool = ThreadPoolExecutor(max_workers=5)
-
-
-future = [pool.submit(get_code_by_selenium, mail) for mail in list_mail]
+# options.headless = False
+# pool = ThreadPoolExecutor(max_workers=5)
+#
+#
+# future = [pool.submit(get_code_by_selenium, mail) for mail in list_mail]
+print(get_code_by_selenium("dyckvelky4@minh.live"))
 print("-" * 100)
 
 
