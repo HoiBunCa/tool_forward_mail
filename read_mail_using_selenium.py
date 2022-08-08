@@ -22,7 +22,7 @@ browser.get(
 WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-login"))).send_keys(
     "nhanmailao@minh.live")
 WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
-WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-passwd"))).send_keys("Team123@")
+WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-passwd"))).send_keys("Team1234@")
 WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
 time.sleep(5)
 browser.get('https://mail.yandex.ru/?uid=1130000057343225#thread/t179862510118279515')
