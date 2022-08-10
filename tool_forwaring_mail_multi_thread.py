@@ -59,7 +59,8 @@ def init_mailbox():
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-login"))).send_keys(
         "nhanmailao@minh.live")
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-passwd"))).send_keys("Team1234@")
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-passwd"))).send_keys(
+        "Team1234@")
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
     time.sleep(5)
     driver.get('https://mail.yandex.ru/?uid=1130000057343225#inbox')
@@ -161,15 +162,7 @@ def login_with_account(email_text, password_text):
     return browser
 
 
-def process_security_email(browser, browser_, email_protect_text):
-    code = ""
-    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs"))).click()
-    print("click to receive process_security_email code: ", code, email_protect_text)
-    WebDriverWait(browser, 100).until(
-        EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCS_ProofConfirmation"))).send_keys(email_protect_text)
-
-    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCS_SendCode"))).click()
-    WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.ID, "footer")))
+def wait_until_page_success(browser):
     check_page_loaded = False
     for i in range(200):
         time.sleep(1)
@@ -181,6 +174,17 @@ def process_security_email(browser, browser_, email_protect_text):
             pass
     if not check_page_loaded:
         print("PAGE LOAD ERROR1")
+
+
+def process_security_email(browser, browser_, email_protect_text):
+    code = ""
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs"))).click()
+    print("click to receive process_security_email code: ", code, email_protect_text)
+    WebDriverWait(browser, 100).until(
+        EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCS_ProofConfirmation"))).send_keys(email_protect_text)
+    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCS_SendCode"))).click()
+    WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
+    wait_until_page_success(browser)
     if "We couldn't send the code. Please try again." in browser.page_source:
         return browser
 
@@ -250,7 +254,9 @@ def add_mail_protect(browser, browser_, email_protect_text):
 def enter_email_forwarding(browser, email_protect_text):
     WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
     browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-    time.sleep(3)
+
+    wait_until_page_success(browser)
+
     try:
         WebDriverWait(browser, 2).until(EC.element_to_be_clickable((By.ID, "iCancel"))).click()
     except Exception as e:
@@ -307,22 +313,25 @@ def enter_email_forwarding(browser, email_protect_text):
             WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
         except Exception as e:
             pass
-        print("bbbbbbbbbbbbbbbbbbbb", email_protect_text)
+        print("bbbbbbbbbbbbbbbbbbbb", email_protect_text, email_protect_text.split("@")[0])
 
-        check_page_loaded = False
-        for i in range(200):
-            time.sleep(1)
-            check_page_loaded = page_has_loaded(browser)
-            if check_page_loaded:
-                print("PAGE LOAD COMPLETE1")
+        wait_until_page_success(browser)
+        for i in range(20):
+            try:
+                WebDriverWait(browser, 200).until(
+                    EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys(
+                    email_protect_text.split("@")[0])
                 break
-            else:
-                pass
-        if not check_page_loaded:
-            print("PAGE LOAD ERROR1")
-        WebDriverWait(browser, 200).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys(
-            email_protect_text.split("@")[0])
+            except Exception as e:
+                WebDriverWait(browser, 200).until(
+                    EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']")))
+                browser.execute_script("arguments[0].click();",
+                                       browser.find_element(By.XPATH, "//*[text()='Enable forwarding']"))
+                WebDriverWait(browser, 200).until(
+                    EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']")))
+                browser.execute_script("arguments[0].click();", browser.find_element(By.XPATH,
+                                                                                     "//*[text()='Keep a copy of forwarded messages']"))
+                print("Exception Enter an email address: ", str(e), email_protect_text)
 
         try:
             WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
@@ -510,164 +519,153 @@ def process(account):
 
     # check email used
     mail_used = check_mail_used(email_text)
-    if mail_used == "Mail usedd":
+    if mail_used == "Mail used":
         status = "forwarded"
         print("forwarded: ", email_text)
     else:
-        for i in range(50):
-            try:
-                browser = login_with_account(email_text, password_text)
-                break
-            except:
-                pass
-        print("LOGIN SUCCESS")
-
-        # time.sleep(8)
-        WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
-        if "We've detected something unusual about this sign-in. For example, you might be signing in from a new location, device or app." in browser.page_source:
-            try:
-                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
-            except:
-                pass
-            reactive_mail(browser, diver1, email_protect_text)
-            status = "re_active mail1"
-            time.sleep(5)
-        elif "For your security and to ensure that only you have access to your account, we will ask you to verify your identity and change your password." in browser.page_source:
-            WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iLandingViewAction"))).click()
-            try:
-                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
-                reactive_mail2(browser, diver1, email_protect_text)
-                status = "change password"
-                password_text = password_text + "!"
-                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iPassword"))).send_keys(
-                    password_text)
-                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iPasswordViewAction"))).click()
+        try:
+            browser = login_with_account(email_text, password_text)
+            print("LOGIN SUCCESS")
+            # time.sleep(8)
+            WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
+            if "We've detected something unusual about this sign-in. For example, you might be signing in from a new location, device or app." in browser.page_source:
                 try:
-                    WebDriverWait(browser, 100).until(
-                        EC.element_to_be_clickable((By.ID, "iReviewProofsViewAction"))).click()
+                    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
+                    reactive_mail(browser, diver1, email_protect_text)
+                    status = "re_active mail1"
                 except:
-                    pass
+                    status = "error"
 
-            except:
-                status = "re_active mail by phone number"
-            time.sleep(5)
-
-        else:
-            try:
-                # gap truong hop 1 chua lam
-                WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "StartAction"))).click()
-
-                print("gap truong hop 1 chua lam: ", email_text)
+                time.sleep(5)
+            elif "For your security and to ensure that only you have access to your account, we will ask you to verify your identity and change your password." in browser.page_source:
+                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iLandingViewAction"))).click()
                 try:
-                    WebDriverWait(browser, 100).until(
-                        EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
-                    phone_num, phone_num_id = get_phone()
-                    print("SDT truong hop 1: ", phone_num, phone_num)
-                    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(
-                        phone_num)
-                    WebDriverWait(browser, 100).until(
-                        EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
-
-                    phone_code_verify = process_code_verify(browser, phone_num_id, 0, 0)
-                    print("phone_code_verify th1: ", phone_code_verify)
-                    if phone_code_verify is None:
-                        browser.quit()
-                        results = [email_text, password_text, email_protect_text, "Chua thue dc sdt"]
-                        print("Chua thue dc sdt_1: {}".format(results))
-                        return
-
-                    WebDriverWait(browser, 100).until(EC.element_to_be_clickable(
-                        (By.XPATH, "//input[@aria-label='Enter the access code']"))).send_keys(phone_code_verify)
-                    try:
-                        WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "ProofAction"))).click()
-                    except:
-                        browser.quit()
-                        results = [email_text, password_text, email_protect_text, "Chua thue dc sdt"]
-                        return
-                    time.sleep(2)
-
-                    try:
-                        WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "FinishAction"))).click()
-                    except Exception as e:
-                        pass
-                    try:
-                        WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idBtn_Back"))).click()
-                    except Exception as e:
-                        pass
-
-                    time.sleep(2)
-                    browser.get("https://outlook.live.com/mail/0/options/mail/layout")
-                    try:
-                        browser = add_mail_protect(browser, diver1, email_protect_text)
-                    except Exception as e:
-                        pass
-
-                    WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
-                    browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-                    time.sleep(3)
-                    browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-                    for i in range(50):
-                        try:
-                            WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
-                            browser = process_security_email(browser, diver1, email_protect_text)
-                            break
-                        except Exception as e:
-                            browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-                            pass
-                    try:
-                        WebDriverWait(browser, 3).until(
-                            EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-                    except Exception as e:
-                        pass
-                    WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
-                    browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-                    time.sleep(3)
-                    try:
-                        browser = enter_email_forwarding(browser, email_protect_text)
-
-                        status = "success"
-                        # insert_db(email_text)
-                        print("Lam xong truong hop 1: ", email_protect_text)
-                    except Exception as e:
-                        browser.save_full_page_screenshot("html/{}.png".format(email_protect_text.split('@')[0]))
-                        status = "Error: web can't loaded"
-                        print("Truong hop 1 bi loi: ", email_protect_text)
-                except Exception as e:
-                    browser.save_full_page_screenshot("html/{}.png".format(email_protect_text.split('@')[0]))
-                    status = "Error"
-                    print("Truong hop 1 bi loi: ", email_protect_text)
-
-            except:
-                try:
-                    # gap truong hop 2 hoac 3 chua lam
-                    browser.get("https://outlook.live.com/mail/0/options/mail/layout")
-                    print("gap truong hop 2 hoac 3 chua lam: ", email_text)
+                    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
+                    reactive_mail2(browser, diver1, email_protect_text)
+                    status = "change password"
+                    password_text = password_text + "!"
+                    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iPassword"))).send_keys(
+                        password_text)
+                    WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iPasswordViewAction"))).click()
                     try:
                         WebDriverWait(browser, 100).until(
-                            EC.element_to_be_clickable((By.XPATH, "//*[text()='Sign in']"))).click()
-                        time.sleep(5)
+                            EC.element_to_be_clickable((By.ID, "iReviewProofsViewAction"))).click()
                     except:
-                        print("Can't click sign in")
-                    # WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
-                    check_page_loaded = False
-                    for i in range(200):
-                        time.sleep(1)
-                        check_page_loaded = page_has_loaded(browser)
-                        if check_page_loaded:
-                            print("PAGE LOAD COMPLETE")
-                            break
-                        else:
-                            pass
-                    if not check_page_loaded:
-                        print("PAGE LOAD ERROR")
+                        pass
+                    status = "re_active mail by phone number"
+                except:
+                    status = "error"
+                time.sleep(5)
+            else:
+                try:
+                    # gap truong hop 1 chua lam
+                    WebDriverWait(browser, 1).until(EC.element_to_be_clickable((By.ID, "StartAction"))).click()
 
-                    if check_page_loaded:
+                    print("gap truong hop 1 chua lam: ", email_text)
+                    try:
+                        WebDriverWait(browser, 100).until(
+                            EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
+                        phone_num, phone_num_id = get_phone()
+                        print("SDT truong hop 1: ", phone_num, phone_num)
+                        WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(
+                            phone_num)
+                        WebDriverWait(browser, 100).until(
+                            EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
+
+                        phone_code_verify = process_code_verify(browser, phone_num_id, 0, 0)
+                        print("phone_code_verify th1: ", phone_code_verify)
+                        if phone_code_verify is None:
+                            browser.close()
+                            results = [email_text, password_text, email_protect_text, "Chua thue dc sdt"]
+                            print("Chua thue dc sdt_1: {}".format(results))
+                            return
+
+                        WebDriverWait(browser, 100).until(EC.element_to_be_clickable(
+                            (By.XPATH, "//input[@aria-label='Enter the access code']"))).send_keys(phone_code_verify)
+                        try:
+                            WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "ProofAction"))).click()
+                        except:
+                            browser.close()
+                            results = [email_text, password_text, email_protect_text, "Chua thue dc sdt"]
+                            return
+                        time.sleep(2)
+
+                        try:
+                            WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "FinishAction"))).click()
+                        except Exception as e:
+                            pass
+                        try:
+                            WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idBtn_Back"))).click()
+                        except Exception as e:
+                            pass
+
+                        time.sleep(2)
+                        browser.get("https://outlook.live.com/mail/0/options/mail/layout")
+                        try:
+                            browser = add_mail_protect(browser, diver1, email_protect_text)
+                        except Exception as e:
+                            pass
+
+                        WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
+                        browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
+
+                        for i in range(50):
+                            try:
+
+                                wait_until_page_success(browser)
+
+                                WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
+                                browser = process_security_email(browser, diver1, email_protect_text)
+                                break
+                            except Exception as e:
+                                browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
+                                pass
+                        try:
+                            WebDriverWait(browser, 3).until(
+                                EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
+                        except Exception as e:
+                            pass
+                        WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
+                        browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
+
+                        wait_until_page_success(browser)
+
+                        try:
+                            browser = enter_email_forwarding(browser, email_protect_text)
+
+                            status = "success"
+                            insert_db(email_text)
+                            print("Lam xong truong hop 1: ", email_protect_text)
+                        except Exception as e:
+                            browser.save_full_page_screenshot("html/{}.png".format(email_protect_text.split('@')[0]))
+                            status = "Error: web can't loaded"
+                            print("Truong hop 1 bi loi: ", email_protect_text)
+                    except Exception as e:
+                        browser.save_full_page_screenshot("html/{}.png".format(email_protect_text.split('@')[0]))
+                        status = "Error"
+                        print("Truong hop 1 bi loi: ", email_protect_text)
+
+                except:
+                    try:
+                        # gap truong hop 2 hoac 3 chua lam
+                        browser.get("https://outlook.live.com/mail/0/options/mail/layout")
+                        print("gap truong hop 2 hoac 3 chua lam: ", email_text)
+                        try:
+                            WebDriverWait(browser, 100).until(
+                                EC.element_to_be_clickable((By.XPATH, "//*[text()='Sign in']"))).click()
+                        except:
+                            print("Can't click sign in")
+
+                        wait_until_page_success(browser)
+
                         if "Help us protect your account" in browser.page_source:
                             try:
                                 browser = add_mail_protect(browser, diver1, email_protect_text)
                                 time.sleep(3)
 
                                 browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
+
+                                wait_until_page_success(browser)
 
                                 browser = process_security_email(browser, diver1, email_protect_text)
                                 time.sleep(3)
@@ -680,8 +678,9 @@ def process(account):
                         else:
                             print("Nhap mail bao ve: ", email_protect_text)
                             browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-                            time.sleep(3)
-                            browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
+
+                            wait_until_page_success(browser)
+
                             for i in range(50):
                                 try:
                                     WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "footer")))
@@ -689,22 +688,15 @@ def process(account):
                                 except:
                                     browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
 
+                            wait_until_page_success(browser)
+
                             try:
                                 browser = process_security_email(browser, diver1, email_protect_text)
-                                check_page_loaded = False
-                                for i in range(200):
-                                    time.sleep(1)
-                                    check_page_loaded = page_has_loaded(browser)
-                                    if check_page_loaded:
-                                        print("PAGE LOAD COMPLETE1")
-                                        break
-                                    else:
-                                        pass
-                                if not check_page_loaded:
-                                    print("PAGE LOAD ERROR1")
+
+                                wait_until_page_success(browser)
 
                                 if "We couldn't send the code. Please try again." in browser.page_source:
-                                    browser.quit()
+                                    browser.close()
                                     return [email_text, password_text, email_protect_text, "Couldn't send the code."]
                                 print("Hoan thanh process_security_email: ", email_protect_text)
                             except Exception as e:
@@ -713,141 +705,110 @@ def process(account):
                                     email_protect_text)
                                 pass
 
-                    # them process_security_email vao day
-                    browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-                    time.sleep(3)
-                    print("Nhay den trang forwading1111: ", email_protect_text)
+                        # them process_security_email vao day
+                        browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
 
-                    browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-                    print("Nhay den trang forwading2222: ", email_protect_text)
-                    time.sleep(3)
-                    print("Nhay den trang forwading3333: ", email_protect_text)
+                        wait_until_page_success(browser)
 
-                    check_page_loaded = False
-                    for i in range(200):
-                        time.sleep(1)
-                        check_page_loaded = page_has_loaded(browser)
-                        if check_page_loaded:
-                            print("PAGE LOAD COMPLETE1")
-                            break
+                        if "Unable to load these settings. Please try again later" in browser.page_source:
+                            print("Chua thue dc sdt: ", email_text)
+
+                            browser.get(
+                                "https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
+                            for i in range(10):
+                                try:
+                                    WebDriverWait(browser, 30).until(
+                                        EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
+                                    break
+                                except:
+                                    browser.get(
+                                        "https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
+                            WebDriverWait(browser, 100).until(
+                                EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
+                            phone_num_th23, phone_num_id_th23 = get_phone()
+                            print("SDT truong hop 2-3: ", phone_num_th23, phone_num_id_th23)
+                            WebDriverWait(browser, 100).until(
+                                EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
+                                phone_num_th23)  # nhap sdt
+                            WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
+                            phone_code_verify23 = process_code_verify23(browser, phone_num_id_th23, 0, 0)
+                            print("phone_code_verify th 2-3: ", phone_code_verify23)
+                            if phone_code_verify23 is None:
+                                browser.close()
+                                results = [email_text, password_text, email_protect_text, "Chua thue dc sdt"]
+                                print("Chua thue dc sdt_23: {}".format(results))
+                                return
+
+                            WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(
+                                phone_code_verify23)  # nhap code
+                            WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
+
+                            time.sleep(2)
+
                         else:
-                            pass
-                    if not check_page_loaded:
-                        print("PAGE LOAD ERROR1")
+                            print("Da thue duoc so dien thoai", email_text)
 
-                    if "Unable to load these settings. Please try again later" in browser.page_source:
-                        print("Chua thue dc sdt: ", email_text)
+                        browser.close()
 
-                        browser.get(
-                            "https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
-                        for i in range(10):
+                        for i in range(50):
                             try:
-                                WebDriverWait(browser, 30).until(
-                                    EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
+                                browser = login_with_account(email_text, password_text)
                                 break
                             except:
-                                browser.get(
-                                    "https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
-                        WebDriverWait(browser, 100).until(
-                            EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
-                        phone_num_th23, phone_num_id_th23 = get_phone()
-                        print("SDT truong hop 2-3: ", phone_num_th23, phone_num_id_th23)
-                        WebDriverWait(browser, 100).until(
-                            EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
-                            phone_num_th23)  # nhap sdt
-                        WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
-                        phone_code_verify23 = process_code_verify23(browser, phone_num_id_th23, 0, 0)
-                        print("phone_code_verify th 2-3: ", phone_code_verify23)
-                        if phone_code_verify23 is None:
-                            browser.quit()
-                            results = [email_text, password_text, email_protect_text, "Chua thue dc sdt"]
-                            print("Chua thue dc sdt_23: {}".format(results))
-                            return
-
-                        WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(
-                            phone_code_verify23)  # nhap code
-                        WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
-
-                        time.sleep(2)
-
-                    else:
-                        print("Da thue duoc so dien thoai", email_text)
-
-                    browser.quit()
-                    for i in range(50):
-                        try:
-                            browser = login_with_account(email_text, password_text)
-                            break
-                        except:
-                            pass
-                    time.sleep(2)
-                    browser.get("https://outlook.live.com/mail/0/options/mail/layout")
-                    WebDriverWait(browser, 60).until(
-                        EC.element_to_be_clickable((By.XPATH, "//*[text()='Sign in']"))).click()
-
-                    WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
-                    browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-                    time.sleep(3)
-                    browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-                    for i in range(50):
-                        try:
-                            WebDriverWait(browser, 30).until(EC.presence_of_element_located((By.ID, "footer")))
-                            break
-                        except:
-                            browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-
-                    browser = process_security_email(browser, diver1, email_protect_text)
-
-                    time.sleep(5)
-
-                    browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
-
-                    check_page_loaded = False
-                    for i in range(200):
-                        time.sleep(1)
-                        check_page_loaded = page_has_loaded(browser)
-                        if check_page_loaded:
-                            print("PAGE LOAD COMPLETE1")
-                            break
-                        else:
-                            pass
-                    if not check_page_loaded:
-                        print("PAGE LOAD ERROR1")
-                    for i in range(50):
-
-                        if "Verify your identity" in browser.page_source:
-                            browser = process_security_email(browser, diver1, email_protect_text)
-                        else:
-                            break
-
-                    time.sleep(3)
-
-                    try:
-                        browser = enter_email_forwarding(browser, email_protect_text)
-                        status = "success"
-                        # insert_db(email_text)
-                        time.sleep(2)
-                    except:
-                        browser.save_full_page_screenshot("html/{}.png".format(email_protect_text.split('@')[0]))
-                        print("Error when add email forwarding", email_text)
-                        status = "Error when add email forwarding"
-
-                    try:
-                        browser.get(
-                            "https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
-                        # xoa sdt
-                        check_page_loaded = False
-                        for i in range(200):
-                            time.sleep(1)
-                            check_page_loaded = page_has_loaded(browser)
-                            if check_page_loaded:
-                                print("PAGE LOAD COMPLETE1")
-                                break
-                            else:
                                 pass
-                        if not check_page_loaded:
-                            print("PAGE LOAD ERROR1")
-                        if check_page_loaded:
+                        time.sleep(2)
+                        browser.get("https://outlook.live.com/mail/0/options/mail/layout")
+                        WebDriverWait(browser, 60).until(
+                            EC.element_to_be_clickable((By.XPATH, "//*[text()='Sign in']"))).click()
+
+                        WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "app")))
+                        browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
+
+                        wait_until_page_success(browser)
+
+                        for i in range(50):
+                            try:
+                                WebDriverWait(browser, 30).until(EC.presence_of_element_located((By.ID, "footer")))
+                                break
+                            except:
+                                browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
+
+                        wait_until_page_success(browser)
+
+                        browser = process_security_email(browser, diver1, email_protect_text)
+
+                        time.sleep(5)
+
+                        browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
+
+                        wait_until_page_success(browser)
+
+                        for i in range(50):
+
+                            if "Verify your identity" in browser.page_source:
+                                browser = process_security_email(browser, diver1, email_protect_text)
+                            else:
+                                break
+
+                        wait_until_page_success(browser)
+
+                        try:
+                            browser = enter_email_forwarding(browser, email_protect_text)
+                            status = "success"
+                            insert_db(email_text)
+                            time.sleep(2)
+                        except:
+                            browser.save_full_page_screenshot("html/{}.png".format(email_protect_text.split('@')[0]))
+                            print("Error when add email forwarding", email_text)
+                            status = "Error when add email forwarding"
+
+                        try:
+                            browser.get(
+                                "https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
+                            # xoa sdt
+
+                            wait_until_page_success(browser)
+
                             try:
                                 WebDriverWait(browser, 10).until(
                                     EC.element_to_be_clickable((By.ID, "idRemoveAssocPhone"))).click()
@@ -855,16 +816,23 @@ def process(account):
                                     EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
                             except:
                                 pass
-                    except:
-                        print("Chua hoan thanh xoa sdt 23: ", email_protect_text)
+                        except:
+                            print("Chua hoan thanh xoa sdt 23: ", email_protect_text)
 
-                    # print("Lam xong truong hop 2-3: ", email_protect_text)
-                except Exception as e:
-                    browser.save_full_page_screenshot("html/{}.png".format(email_protect_text.split('@')[0]))
-                    status = "Error"
-                    print("Truong hop 2-3 bi loi", email_text)
+                        # print("Lam xong truong hop 2-3: ", email_protect_text)
+                    except Exception as e:
+                        browser.save_full_page_screenshot("html/{}.png".format(email_protect_text.split('@')[0]))
+                        status = "Error"
+                        print("Truong hop 2-3 bi loi", email_text)
+            browser.close()
+        except:
+            status = "error unknown"
+            pass
+        finally:
+            browser.close()
 
-        browser.quit()
+
+
     results = [email_text, password_text, email_protect_text, status]
     return results
     # print("RESULTS: ", results)
@@ -892,7 +860,7 @@ def reactive_mail(browser, browser_, email_protect_text):
             break
     if code == "":
         return browser
-
+    wait_until_page_success(browser)
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iVerifyCodeAction"))).click()
 
@@ -912,6 +880,7 @@ def reactive_mail2(browser, browser_, email_protect_text):
     if code == "":
         return browser
 
+    wait_until_page_success(browser)
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
     WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iVerifyCodeAction"))).click()
 
@@ -926,6 +895,6 @@ if __name__ == '__main__':
         for i in future:
             results_list.append(i.result())
     print("All task done.")
-    diver1.quit()
+    diver1.close()
     results_df = pd.DataFrame(results_list, columns=["email", "password", "email_protect", "status"])
     results_df.to_excel("results_{}.xlsx".format(time.time()))
