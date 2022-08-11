@@ -14,17 +14,10 @@ import pandas as pd
 import sqlite3
 import requests
 
-options = Options()
-options.set_preference('intl.accept_languages', 'en-GB')
-options.set_preference("permissions.default.image", 2)
-#options.binary_location = "C:/Users/84916/AppData/Local/Mozilla Firefox/firefox.exe"
-options.headless = False
 
-
-def init_mailbox(main_mail, main_pass):
+def init_mailbox(options, main_mail, main_pass):
     driver = webdriver.Firefox(options=options)
-    driver.get(
-        "https://passport.yandex.ru/auth?retpath=https%3A%2F%2Fmail.yandex.ru%2F&backpath=https%3A%2F%2Fmail.yandex.ru%2F%3Fnoretpath%3D1&from=mail&origin=hostroot_homer_auth_ru")
+    driver.get("https://passport.yandex.ru/auth?retpath=https%3A%2F%2Fmail.yandex.ru%2F&backpath=https%3A%2F%2Fmail.yandex.ru%2F%3Fnoretpath%3D1&from=mail&origin=hostroot_homer_auth_ru")
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-login"))).send_keys(main_mail)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-passwd"))).send_keys(main_pass)
@@ -52,14 +45,15 @@ def wait_until_page_success(browser):
         check_page_loaded = page_has_loaded(browser)
         if check_page_loaded:
             print("PAGE LOAD COMPLETE1")
-            
+
             break
         else:
             pass
     if not check_page_loaded:
         print("PAGE LOAD ERROR1")
-        
+
     return browser
+
 
 def mask_as_read(driver, code_of_mail):
     for i in range(50):
@@ -106,7 +100,7 @@ def init_test(options):
     return driver
 
 
-def login_with_account(email_text, password_text):
+def login_with_account(options, email_text, password_text):
     browser = webdriver.Firefox(options=options)
     browser.get('https://login.live.com')
     browser = wait_until_page_success(browser)
@@ -501,7 +495,7 @@ def enter_email_forwarding(browser, email_protect_text):
 
         WebDriverWait(browser, 200).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']")))
         # todo: uncomment
-        # browser.execute_script("arguments[0].click();", browser.find_element(By.XPATH, "//*[text()='Save']"))
+        browser.execute_script("arguments[0].click();", browser.find_element(By.XPATH, "//*[text()='Save']"))
 
     print("SUCCESS add forwarding mail: ", email_protect_text)
     return browser
@@ -565,10 +559,15 @@ class MyWindow:
         self.HEADLESS_FALSE = Radiobutton(win, text="False", variable=self.var, value=False, command=self.sel)
         self.HEADLESS_FALSE.place(x=350, y=300)
 
+        self.lbl7 = Label(win, text='Firefox path')
+        self.lbl7.place(x=50, y=350)
+        self.FIREFOX_PATH = Entry(bd=3, width=30)
+        self.FIREFOX_PATH.place(x=200, y=350)
+
         self.processBtn = Button(win, text='Process', command=self.main, state=DISABLED)
-        self.processBtn.place(x=200, y=350)
+        self.processBtn.place(x=200, y=400)
         self.resultsLabel = Label(win, text='')
-        self.resultsLabel.place(x=300, y=350)
+        self.resultsLabel.place(x=300, y=400)
 
         self.b2 = Button(win, text='Open file', command=lambda: self.open_file())
         self.b2.place(x=200, y=50)
@@ -598,7 +597,7 @@ class MyWindow:
     def check_input_fill(self):
         while True:
             if len(self.MAIN_EMAIL.get()) and len(self.MAIN_EMAIL_PASSWORD.get()) and len(self.API_KEY.get()) and len(
-                    self.NUM_WORKER.get()):
+                    self.NUM_WORKER.get()) and len(self.FIREFOX_PATH.get()):
                 self.processBtn['state'] = NORMAL
             else:
                 self.processBtn['state'] = DISABLED
@@ -609,11 +608,19 @@ class MyWindow:
         print(self.API_KEY.get())
         print(self.NUM_WORKER.get())
         print(self.HEADLESS)
+        print(str(self.FIREFOX_PATH.get().replace("\\", "/")))
+
+        options = Options()
+        options.set_preference('intl.accept_languages', 'en-GB')
+        options.set_preference("permissions.default.image", 2)
+        options.binary_location = str(self.FIREFOX_PATH.get().replace("\\", "/"))
+        # C:\Program Files\Mozilla Firefox\firefox.exe
+        options.headless = True
 
         diver1 = None
         for i in range(10):
             try:
-                diver1 = init_mailbox(self.MAIN_EMAIL.get(), self.MAIN_EMAIL_PASSWORD.get())
+                diver1 = init_mailbox(options, self.MAIN_EMAIL.get(), self.MAIN_EMAIL_PASSWORD.get())
                 # diver1 = init_test(options)
                 break
             except Exception as e:
@@ -639,7 +646,7 @@ class MyWindow:
 
                 for i in range(20):
                     try:
-                        browser = login_with_account(email_text, password_text)
+                        browser = login_with_account(options, email_text, password_text)
                         break
                     except:
                         print("LOGIN FAIL")
@@ -760,7 +767,7 @@ class MyWindow:
 
                                 status = "success"
                                 # todo: uncomment
-                                # insert_db(email_text)
+                                insert_db(email_text)
                                 print("Lam xong truong hop 1: ", email_protect_text)
                             except Exception as e:
                                 browser.save_full_page_screenshot(
@@ -838,7 +845,10 @@ class MyWindow:
                             browser.get("https://outlook.live.com/mail/0/options/mail/forwarding")
 
                             browser = wait_until_page_success(browser)
-                            time.sleep(2)
+                            # time.sleep(2)
+
+                            WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, "//input[@title='Search settings']")))
+
                             if "Unable to load these settings. Please try again later" in browser.page_source:
                                 print("Chua thue dc sdt: ", email_text)
 
@@ -880,17 +890,19 @@ class MyWindow:
                             elif "You can forward your email to another account." in browser.page_source:
                                 print("Da thue duoc so dien thoai", email_text)
                                 browser = enter_email_forwarding(browser, email_protect_text)
-                                results = [email_text, password_text, email_protect_text, "success"]
-                                return results
+                                browser.close()
+                                return [email_text, password_text, email_protect_text, "success"]
                             else:
-                                results = [email_text, password_text, email_protect_text, "error unknown"]
-                                return results
+                                browser.save_full_page_screenshot(
+                                    "html/{}.png".format(email_protect_text.split('@')[0]))
+                                browser.close()
+                                return [email_text, password_text, email_protect_text, "error unknown"]
 
                             browser.close()
 
                             for i in range(50):
                                 try:
-                                    browser = login_with_account(email_text, password_text)
+                                    browser = login_with_account(options, email_text, password_text)
                                     break
                                 except:
                                     pass
@@ -934,7 +946,7 @@ class MyWindow:
                                 browser = enter_email_forwarding(browser, email_protect_text)
                                 status = "success"
                                 # todo: uncomment
-                                # insert_db(email_text)
+                                insert_db(email_text)
                                 time.sleep(2)
                             except:
                                 browser.save_full_page_screenshot(
@@ -965,7 +977,8 @@ class MyWindow:
                             status = "Error"
                             print("Truong hop 2-3 bi loi", email_text)
 
-                browser.close()
+
+            print("Close browser!!!!!!!")
             results = [email_text, password_text, email_protect_text, status]
             return results
             # print("RESULTS: ", results)
@@ -979,19 +992,21 @@ class MyWindow:
         try:
             with ThreadPoolExecutor(max_workers=int(self.NUM_WORKER.get())) as pool:
                 futures = [pool.submit(process, mail) for mail in self.emails]
-                wait(futures)
+                # wait(futures)
                 for i in futures:
                     results_list.append(i.result())
         except:
             pass
-
-            # future = [pool.submit(test_process)]
+        # with ThreadPoolExecutor(max_workers=int(self.NUM_WORKER.get())) as pool:
+        #     future = [pool.submit(test_process)]
 
         print("All task done.")
         print("results_list", results_list)
+        results_df = pd.DataFrame(results_list, columns=["email", "password", "email_protect", "status"])
+        results_df.to_excel("results_{}.xlsx".format(time.time()))
 
         self.resultsLabel = Label(self.win, text='DONE!')
-        self.resultsLabel.place(x=300, y=300)
+        self.resultsLabel.place(x=300, y=450)
         diver1.close()
 
 
@@ -999,5 +1014,5 @@ if __name__ == '__main__':
     window = Tk()
     mywin = MyWindow(window)
     window.title('Tool Forward Mail')
-    window.geometry("500x400+10+10")
+    window.geometry("500x500+10+10")
     window.mainloop()
