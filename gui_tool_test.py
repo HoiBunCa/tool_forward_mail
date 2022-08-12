@@ -661,6 +661,7 @@ class MyWindow:
                         status = "re_active mail1"
                     except:
                         status = "error"
+                        browser.close()
 
                     time.sleep(5)
                 elif "For your security and to ensure that only you have access to your account, we will ask you to verify your identity and change your password." in browser.page_source:
@@ -682,7 +683,8 @@ class MyWindow:
                         status = "re_active mail by phone number"
                     except:
                         status = "error"
-                    time.sleep(5)
+                    time.sleep(2)
+                    browser.close()
                 else:
                     try:
                         # gap truong hop 1 chua lam
@@ -846,9 +848,12 @@ class MyWindow:
 
                             browser = wait_until_page_success(browser)
                             # time.sleep(2)
-
-                            WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.XPATH, "//input[@title='Search settings']")))
-
+                            print("11111111", email_protect_text)
+                            try:
+                                WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.XPATH, "//input[@title='Search settings']")))
+                            except Exception as e:
+                                print("AAAAAAa", e)
+                            print("@222222222", email_protect_text)
                             if "Unable to load these settings. Please try again later" in browser.page_source:
                                 print("Chua thue dc sdt: ", email_text)
 
@@ -857,33 +862,29 @@ class MyWindow:
                                 for i in range(10):
                                     try:
                                         WebDriverWait(browser, 30).until(
-                                            EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
+                                            EC.presence_of_element_located((By.ID, "idAddPhoneAliasLink"))).click()
                                         break
                                     except:
                                         browser.get(
                                             "https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
                                 WebDriverWait(browser, 100).until(
-                                    EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
+                                    EC.presence_of_element_located((By.XPATH, "//select/option[@value='VN']"))).click()
                                 phone_num_th23, phone_num_id_th23 = get_phone()
                                 print("SDT truong hop 2-3: ", phone_num_th23, phone_num_id_th23)
                                 WebDriverWait(browser, 100).until(
-                                    EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
-                                    phone_num_th23)  # nhap sdt
+                                    EC.presence_of_element_located((By.ID, "DisplayPhoneNumber"))).send_keys(phone_num_th23)  # nhap sdt
                                 WebDriverWait(browser, 100).until(
-                                    EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
+                                    EC.presence_of_element_located((By.ID, "iBtn_action"))).click()
                                 phone_code_verify23 = process_code_verify23(browser, phone_num_id_th23, 0, 0)
                                 print("phone_code_verify th 2-3: ", phone_code_verify23)
                                 if phone_code_verify23 is None:
                                     browser.close()
                                     results = [email_text, password_text, email_protect_text, "Chua thue dc sdt"]
                                     print("Chua thue dc sdt_23: {}".format(results))
-                                    return
+                                    return results
 
-                                WebDriverWait(browser, 100).until(
-                                    EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(
-                                    phone_code_verify23)  # nhap code
-                                WebDriverWait(browser, 100).until(
-                                    EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
+                                WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "iOttText"))).send_keys(phone_code_verify23)  # nhap code
+                                WebDriverWait(browser, 100).until(EC.presence_of_element_located((By.ID, "iBtn_action"))).click()
 
                                 time.sleep(2)
 
