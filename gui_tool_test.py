@@ -613,9 +613,9 @@ class MyWindow:
         options = Options()
         options.set_preference('intl.accept_languages', 'en-GB')
         options.set_preference("permissions.default.image", 2)
-        options.binary_location = str(self.FIREFOX_PATH.get().replace("\\", "/"))
+        # options.binary_location = str(self.FIREFOX_PATH.get().replace("\\", "/"))
         # C:\Program Files\Mozilla Firefox\firefox.exe
-        options.headless = True
+        options.headless = False
 
         diver1 = None
         for i in range(10):
@@ -891,6 +891,7 @@ class MyWindow:
                             elif "You can forward your email to another account." in browser.page_source:
                                 print("Da thue duoc so dien thoai", email_text)
                                 browser = enter_email_forwarding(browser, email_protect_text)
+                                insert_db(email_text)
                                 browser.close()
                                 return [email_text, password_text, email_protect_text, "success"]
                             else:
