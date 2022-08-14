@@ -31,6 +31,9 @@ class CantReceiveCodeFromApiBuyPhone(Exception):
     """Raise if can not receive code from buy phone"""
     pass
 
+class CantProcessBuyPhone(Exception):
+    pass
+
 
 def create_driver(path_firefox: str = None) -> webdriver.Firefox:
     options = Options()
@@ -40,7 +43,7 @@ def create_driver(path_firefox: str = None) -> webdriver.Firefox:
     if path_firefox is None:
         path_firefox = PATH_FIREFOX
     # options.binary_location = path_firefox  # "C:/Program Files/Mozilla Firefox/firefox.exe"
-    options.headless = False
+    options.headless = True
     driver = webdriver.Firefox(options=options)
     return driver
 
@@ -69,7 +72,7 @@ def login_mail(driver, mail, password):
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "i0118"))).send_keys(password)
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idSIButton9"))).click()
     except:
-        raise LoginFailException
+        raise LoginFailException("Login fail")
 
 
 def mask_mail_as_read(driver, code_of_mail):
@@ -200,7 +203,7 @@ def reactive_by_phone(driver):
 
     phone_code_verify = process_code_verify(driver, phone_num_id, 0, 0)
     if phone_code_verify is None:
-        raise CantReceiveCodeFromApiBuyPhone
+        raise CantReceiveCodeFromApiBuyPhone("Cant receive code from api buy phone - reactive_by_phone")
 
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input[@aria-label='Enter the access code']"))).send_keys(phone_code_verify)
     try:
@@ -235,7 +238,7 @@ def go_to_page_forwarding(driver):
     driver.refresh()
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//p[contains(text(), 'You can forward your email to another account.')] | //div[contains(text(), 'Unable to load these settings. Please try again later.')]")))
-    driver.save_full_page_screenshot("html/{}.png".format("AAAAAA"))
+    # driver.save_full_page_screenshot("html/{}.png".format("AAAAAA"))
 
 
 def enable_setting_forward_mail(driver):
@@ -250,16 +253,24 @@ def enable_setting_forward_mail(driver):
         for i in range(10):
             try:
                 WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
+                print("idAddPhoneAliasLink: ")
                 break
             except:
                 driver.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
+        for i in range(10):
+            try:
+                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
+                break
+            except:
+                raise CantProcessBuyPhone("Cant Process Buy Phone")
+
+
         phone_num_th23, phone_num_id_th23 = buy_phone()
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(phone_num_th23)  # nhap sdt
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
         phone_code_verify23 = process_code_verify23(driver, phone_num_id_th23, 0, 0)
         if phone_code_verify23 is None:
-            raise CantReceiveCodeFromApiBuyPhone
+            raise CantReceiveCodeFromApiBuyPhone("Cant receive code from api buy phone - enable_setting_forward_mail")
 
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(phone_code_verify23)  # nhap code
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
@@ -272,7 +283,7 @@ def add_protect_mail(driver, mail, browser_):
     if not "Passwords can be forgotten or stolen. Just in case, add security info now to help you get back into your account if something goes wrong. " in driver.page_source:
         return
 
-    code = ""
+    code = None
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "EmailAddress"))).send_keys(mail)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
     print("MAIL::: ", mail)
@@ -285,8 +296,8 @@ def add_protect_mail(driver, mail, browser_):
                 break
         except:
             pass
-    if code == "":
-        raise CantReceiveCodeFromEmailException
+    if code is None:
+        raise CantReceiveCodeFromEmailException("cant receive code from email")
 
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
@@ -298,14 +309,14 @@ def verify_by_mail(driver, mail, browser_):
     if not "idDiv_SAOTCS_Proofs" in driver.page_source:
         return
 
-    code = ""
+    code = None
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs"))).click()
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCS_ProofConfirmation"))).send_keys(mail)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCS_SendCode"))).click()
     WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.ID, "footer")))
     wait_until_page_success(driver)
     if "We couldn't send the code. Please try again." in driver.page_source:
-        raise CantReceiveCodeFromEmailException
+        raise CantReceiveCodeFromEmailException("We couldn't send the code. Please try again")
 
     for i in range(50):
         time.sleep(2)
@@ -316,8 +327,8 @@ def verify_by_mail(driver, mail, browser_):
                 break
         except:
             pass
-    if code == "":
-        raise CantReceiveCodeFromEmailException
+    if code is None:
+        raise CantReceiveCodeFromEmailException("no have code")
 
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCC_OTC"))).send_keys(code)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCC_Continue"))).click()
@@ -334,7 +345,7 @@ def verify_by_mail(driver, mail, browser_):
 
 
 def reactive_mail(driver, browser_, email_protect_text):
-    code = ""
+    code = None
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
         email_protect_text.split("@")[0])
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()
@@ -344,8 +355,8 @@ def reactive_mail(driver, browser_, email_protect_text):
         print("re_active mail: ", code)
         if code is not None:
             break
-    if code == "":
-        raise CantReceiveCodeFromEmailException
+    if code is None:
+        raise CantReceiveCodeFromEmailException("no have code")
 
     wait_until_page_success(driver)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
@@ -360,16 +371,19 @@ def relogin(driver, mail, password):
         except:
             pass
     time.sleep(2)
-    go_to_page_forwarding(driver)
 
 
-def setting_forward(driver, email_protect_text, mail, password):
+def setting_forward(driver, email_protect_text, mail, password, driver_main_mail):
 
     go_to_page_forwarding(driver)
     if "Unable to load these settings. Please try again later." in driver.page_source:
         driver.close()
         driver = create_driver()
         relogin(driver, mail, password)
+        go_to_page_profile(driver)
+        verify_by_mail(driver, email_protect_text, driver_main_mail)
+
+        go_to_page_forwarding(driver)
 
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
@@ -526,12 +540,13 @@ def setting_forward(driver, email_protect_text, mail, password):
         driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, "//*[text()='Save']"))
 
     print("SUCCESS add forwarding mail: ", email_protect_text)
-    time.sleep(2)
 
 
 def delete_phone(driver):
     """Use when all step is done"""
+    print("delete_phone1111111")
     driver.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
+    print("delete_phone2222222")
     wait_until_page_success(driver)
     try:
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "idRemoveAssocPhone"))).click()
@@ -628,7 +643,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail):
 
         # add_protect_mail(driver, mail_protect, driver_main_mail)
         # verify_by_mail(driver, mail, driver_main_mail)
-        # setting_forward(driver, mail_protect, mail, password)
+        # setting_forward(driver, mail_protect, mail, password, driver_main_mail)
         # delete_phone(driver)
 
         case = process_after_login_case(driver)
@@ -648,7 +663,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail):
             go_to_page_profile(driver)
             verify_by_mail(driver, mail_protect, driver_main_mail)
             enable_setting_forward_mail(driver)
-            setting_forward(driver, mail_protect, mail, password)
+            setting_forward(driver, mail_protect, mail, password, driver_main_mail)
             delete_phone(driver)
             insert_db(mail)
         if case == 3:
@@ -658,10 +673,10 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail):
             go_to_page_profile(driver)
             verify_by_mail(driver, mail, driver_main_mail)
             enable_setting_forward_mail(driver)
-            setting_forward(driver, mail_protect, mail, password)
+            setting_forward(driver, mail_protect, mail, password, driver_main_mail)
             insert_db(mail)
-        print("CCCCCCCCCCCCCCCCCCCCC")
-        return [mail, password, mail_protect, "status"]
+
+        return [mail, password, mail_protect, "success"]
 
     except LoginFailException as loginFailException:
         print("LoginFailException: ", mail)
@@ -671,10 +686,14 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail):
         return [mail, password, mail_protect, "CantReceiveCodeFromApiBuyPhone"]
     except CantReceiveCodeFromEmailException as cantReceiveCodeFromApiBuyPhone:
         return [mail, password, mail_protect, "CantReceiveCodeFromEmailException"]
+    except CantProcessBuyPhone as cantProcessBuyPhone:
+        return [mail, password, mail_protect, "CantProcessBuyPhone"]
     except Exception as e:
         pass
     finally:
+        print("DONEEEEEEEEEE")
         driver.close()
+        
 
 
 def go_to_page_profile(driver):
@@ -799,7 +818,7 @@ class MyWindow:
         main_password = "Team1234@"
 
         # process_all_mail(self.emails, int(num_processes), main_mail, main_password)
-        process_all_mail(self.emails, 1, main_mail, main_password)
+        process_all_mail(self.emails, 2, main_mail, main_password)
 
 if __name__ == '__main__':
     window = Tk()
