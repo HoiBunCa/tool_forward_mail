@@ -511,7 +511,7 @@ def process(account):
 
     # check email used
     mail_used = check_mail_used(email_text)
-    if mail_used == "Mail usedd":
+    if mail_used == "Mail used":
         status = "forwarded"
         print("forwarded: ", email_text)
     else:
@@ -627,7 +627,7 @@ def process(account):
                         browser = enter_email_forwarding(browser, email_protect_text)
 
                         status = "success"
-                        # insert_db(email_text)
+                        insert_db(email_text)
                         print("Lam xong truong hop 1: ", email_protect_text)
                     except Exception as e:
                         browser.save_full_page_screenshot("html/{}.png".format(email_protect_text.split('@')[0]))
@@ -826,7 +826,7 @@ def process(account):
                     try:
                         browser = enter_email_forwarding(browser, email_protect_text)
                         status = "success"
-                        # insert_db(email_text)
+                        insert_db(email_text)
                         time.sleep(2)
                     except:
                         browser.save_full_page_screenshot("html/{}.png".format(email_protect_text.split('@')[0]))
