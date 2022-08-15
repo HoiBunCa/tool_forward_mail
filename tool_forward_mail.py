@@ -2,6 +2,7 @@ import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 from tkinter import Label, NORMAL, DISABLED, Entry, Radiobutton, IntVar, Button
 from tkinter.filedialog import askopenfile
+import time
 
 import pandas as pd
 import requests
