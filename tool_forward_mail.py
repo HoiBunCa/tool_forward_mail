@@ -44,8 +44,8 @@ def create_driver(path_firefox: str = None) -> webdriver.Firefox:
     PATH_FIREFOX = "C:/Program Files/Mozilla Firefox/firefox.exe"
     if path_firefox is None:
         path_firefox = PATH_FIREFOX
-    # options.binary_location = path_firefox  # "C:/Program Files/Mozilla Firefox/firefox.exe"
-    options.headless = True
+    options.binary_location = path_firefox  # "C:/Program Files/Mozilla Firefox/firefox.exe"
+    options.headless = False
     driver = webdriver.Firefox(options=options)
     return driver
 
@@ -114,9 +114,9 @@ def get_code_by_mail(driver, email):
         return None
 
 
-def buy_phone():
+def buy_phone(key_chothuesim):
     """Call Api buy phone"""
-    url = "https://chothuesimcode.com/api?act=number&apik=5ec165c3b6eae475&appId=1017&carrier=Viettel"
+    url = f"https://chothuesimcode.com/api?act=number&apik={key_chothuesim}&appId=1017&carrier=Viettel"
     payload = {}
     headers = {}
     response = requests.request("GET", url, headers=headers, data=payload)
@@ -128,9 +128,9 @@ def buy_phone():
         return -1, -1
 
 
-def get_code_by_phone(bill_id):
+def get_code_by_phone(bill_id, key_chothuesim):
     """Get code from API buy phone"""
-    url = "https://chothuesimcode.com/api?act=code&apik=5ec165c3b6eae475&id={}".format(bill_id)
+    url = f"https://chothuesimcode.com/api?act=code&apik={key_chothuesim}&id={bill_id}"
     payload = {}
     headers = {}
     response = requests.request("GET", url, headers=headers, data=payload)
@@ -143,10 +143,10 @@ def get_code_by_phone(bill_id):
         return -1, -1
 
 
-def process_code_verify(driver, bill_id, nums0=0, nums1=0):
+def process_code_verify(driver, bill_id, nums0=0, nums1=0, key_chothuesim=""):
     try:
         time.sleep(2)
-        phone_code_verify, reponse_code = get_code_by_phone(bill_id)
+        phone_code_verify, reponse_code = get_code_by_phone(bill_id, key_chothuesim)
         if reponse_code == 0:
             return phone_code_verify
         if nums1 == 4:
@@ -160,23 +160,23 @@ def process_code_verify(driver, bill_id, nums0=0, nums1=0):
                     pass
                 WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).clear()
                 time.sleep(2)
-                phone_num1, bill_id1 = buy_phone()
+                phone_num1, bill_id1 = buy_phone(key_chothuesim)
                 WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(
                     phone_num1)
                 WebDriverWait(driver, 100).until(
                     EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
-                return process_code_verify(driver, bill_id1, 0, nums1 + 1)
-            return process_code_verify(driver, bill_id, nums0 + 1, nums1)
+                return process_code_verify(driver, bill_id1, 0, nums1 + 1, key_chothuesim)
+            return process_code_verify(driver, bill_id, nums0 + 1, nums1, key_chothuesim)
 
     except Exception as e:
         print("Exception when process_code_verify11: ", e)
         return None
 
 
-def process_code_verify23(browser, bill_id, nums0=0, nums1=0):
+def process_code_verify23(browser, bill_id, nums0=0, nums1=0, key_chothuesim=""):
     try:
         time.sleep(2)
-        phone_code_verify, reponse_code = get_code_by_phone(bill_id)
+        phone_code_verify, reponse_code = get_code_by_phone(bill_id, key_chothuesim)
 
         if reponse_code == 0:
             return phone_code_verify
@@ -189,37 +189,38 @@ def process_code_verify23(browser, bill_id, nums0=0, nums1=0):
                 WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
                 WebDriverWait(browser, 100).until(
                     EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
-                phone_num1, bill_id1 = buy_phone()
+                phone_num1, bill_id1 = buy_phone(key_chothuesim)
                 WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
                     phone_num1)
                 WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
-                return process_code_verify23(browser, bill_id1, 0, nums1 + 1)
-            return process_code_verify23(browser, bill_id, nums0 + 1, nums1)
+                return process_code_verify23(browser, bill_id1, 0, nums1 + 1, key_chothuesim)
+            return process_code_verify23(browser, bill_id, nums0 + 1, nums1, key_chothuesim)
     except Exception as e:
         print("Exception when process_code_verify23: ", e)
         return None
 
 
-def reactive_by_phone(driver):
+def reactive_by_phone(driver, key_chothuesim):
     """Use when mail is locked. After login"""
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "StartAction"))).click()
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
-    phone_num, phone_num_id = buy_phone()
+    phone_num, phone_num_id = buy_phone(key_chothuesim)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(phone_num)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
 
-    phone_code_verify = process_code_verify(driver, phone_num_id, 0, 0)
+    phone_code_verify = process_code_verify(driver, phone_num_id, 0, 0, key_chothuesim)
     if phone_code_verify is None:
         raise CantReceiveCodeFromApiBuyPhone("Cant receive code from api buy phone - reactive_by_phone")
 
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input[@aria-label='Enter the access code']"))).send_keys(phone_code_verify)
+    WebDriverWait(driver, 100).until(
+        EC.element_to_be_clickable((By.XPATH, "//input[@aria-label='Enter the access code']"))).send_keys(
+        phone_code_verify)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "ProofAction"))).click()
 
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "FinishAction"))).click()
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idBtn_Back"))).click()
 
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "microsoft")))
-
 
 
 def check_mail_has_phone(driver):
@@ -245,7 +246,7 @@ def go_to_page_forwarding(driver):
     # driver.save_full_page_screenshot("html/{}.png".format("AAAAAA"))
 
 
-def enable_setting_forward_mail(driver):
+def enable_setting_forward_mail(driver, key_chothuesim):
     print("enable_setting_forward_mail")
     go_to_page_forwarding(driver)
 
@@ -269,11 +270,11 @@ def enable_setting_forward_mail(driver):
             except:
                 raise CantProcessBuyPhone("Cant Process Buy Phone")
 
-        phone_num_th23, phone_num_id_th23 = buy_phone()
+        phone_num_th23, phone_num_id_th23 = buy_phone(key_chothuesim)
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
             phone_num_th23)  # nhap sdt
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
-        phone_code_verify23 = process_code_verify23(driver, phone_num_id_th23, 0, 0)
+        phone_code_verify23 = process_code_verify23(driver, phone_num_id_th23, 0, 0, key_chothuesim)
         if phone_code_verify23 is None:
             raise CantReceiveCodeFromApiBuyPhone("Cant receive code from api buy phone - enable_setting_forward_mail")
 
@@ -381,11 +382,11 @@ def relogin(driver, mail, password):
     time.sleep(2)
 
 
-def setting_forward(driver, email_protect_text, mail, password, driver_main_mail):
+def setting_forward(driver, email_protect_text, mail, password, driver_main_mail, path_firefox):
     go_to_page_forwarding(driver)
     if "Unable to load these settings. Please try again later." in driver.page_source:
         driver.close()
-        driver = create_driver()
+        driver = create_driver(path_firefox)
         relogin(driver, mail, password)
         go_to_page_profile(driver)
         verify_by_mail(driver, email_protect_text, driver_main_mail)
@@ -649,27 +650,27 @@ def process_after_login_case(driver):
     return case
 
 
-def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail):
+def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim):
     mail_used = check_mail_used(mail)
     if mail_used == "Mail used":
         print("forwarded: ", mail)
         return [mail, password, mail_protect, "forwarded"]
 
-    driver = create_driver()
+    driver = create_driver(path_firefox)
     try:
         login_mail(driver, mail, password)
 
         # process_after_login(driver, driver_main_mail, mail)
         # add_protect_mail(driver, mail_protect, driver_main_mail)
         # verify_by_mail(driver, mail, driver_main_mail)
-        # setting_forward(driver, mail_protect, mail, password, driver_main_mail)
+        # setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
         # delete_phone(driver)
 
         case = process_after_login_case(driver)
 
         wait_until_page_success(driver)
         if case == -1:
-            pass
+            return [mail, password, mail_protect, "manual process"]
 
         if case == 0:
             wait_until_page_success(driver=driver)
@@ -679,36 +680,39 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail):
             add_protect_mail(driver, mail_protect, driver_main_mail)
             go_to_page_profile(driver)
             verify_by_mail(driver, mail_protect, driver_main_mail)
-            enable_setting_forward_mail(driver)
-            setting_forward(driver, mail_protect, mail, password, driver_main_mail)
-            delete_phone(driver)
-            return [mail, password, mail_protect, "success"]
+            enable_setting_forward_mail(driver, key_thuesim)
+            setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            try:
+                delete_phone(driver)
+                return [mail, password, mail_protect, "success"]
+            except:
+                return [mail, password, mail_protect, "success-manual delete phone"]
 
         if case == 1:
             return [mail, password, mail_protect, "manual process"]
-            pass
 
         if case == 2:
             go_to_page_profile(driver)
             add_protect_mail(driver, mail_protect, driver_main_mail)
             go_to_page_profile(driver)
             verify_by_mail(driver, mail_protect, driver_main_mail)
-            enable_setting_forward_mail(driver)
-            setting_forward(driver, mail_protect, mail, password, driver_main_mail)
-            delete_phone(driver)
-            return [mail, password, mail_protect, "success"]
+            enable_setting_forward_mail(driver, key_thuesim)
+            setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            try:
+                delete_phone(driver)
+                return [mail, password, mail_protect, "success"]
+            except:
+                return [mail, password, mail_protect, "success-manual delete phone"]
 
         if case == 3:
-            reactive_by_phone(driver)
+            reactive_by_phone(driver, key_thuesim)
             go_to_page_profile(driver)
             add_protect_mail(driver, mail_protect, driver_main_mail)
             go_to_page_profile(driver)
             verify_by_mail(driver, mail, driver_main_mail)
-            enable_setting_forward_mail(driver)
-            setting_forward(driver, mail_protect, mail, password, driver_main_mail)
+            enable_setting_forward_mail(driver, key_thuesim)
+            setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
             return [mail, password, mail_protect, "success"]
-
-
 
     except LoginFailException as loginFailException:
         print("LoginFailException: ", mail)
@@ -723,8 +727,8 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail):
     except Exception as e:
         pass
     finally:
-        print("DONEEEEEEEEEE")
         driver.close()
+        print("DONEEEEEEEEEE")
 
 
 def go_to_page_profile(driver):
@@ -732,15 +736,17 @@ def go_to_page_profile(driver):
     wait_until_page_success(driver=driver)
 
 
-def process_all_mail(list_mails: list, num_processes: int = 1, main_mail: str = "", main_password: str = ""):
-    driver_mail_mail = create_driver()
+def process_all_mail(list_mails: list, num_processes: int = 1, main_mail: str = "", main_password: str = "",
+                     path_firefox: str = "", key_thuesim: str = ""):
+    driver_mail_mail = create_driver(path_firefox)
     driver1 = create_main_mail_box(driver_mail_mail, main_mail, main_password)
 
     results_list = []
     with ThreadPoolExecutor(max_workers=num_processes) as executor:
         futures = []
         for mail, password, mail_protect in list_mails:
-            future = executor.submit(run_all_step_config_forward, mail, password, mail_protect, driver1)
+            future = executor.submit(run_all_step_config_forward, mail, password, mail_protect, driver1, path_firefox,
+                                     key_thuesim)
             futures.append(future)
 
         for future in futures:
@@ -843,13 +849,21 @@ class MyWindow:
     def main(self):
 
         num_processes = self.NUM_WORKER.get()
-        # main_mail = self.MAIN_EMAIL.get()
-        # main_password = self.MAIN_EMAIL_PASSWORD.get()
-        main_mail = "nhanmailao@minh.live"
-        main_password = "Team1234@"
+        main_mail = self.MAIN_EMAIL.get()
+        main_password = self.MAIN_EMAIL_PASSWORD.get()
+        path_firefox = self.FIREFOX_PATH.get().replace("\\", "/")
+        key_thuesim = self.API_KEY.get()
 
-        # process_all_mail(self.emails, int(num_processes), main_mail, main_password)
-        process_all_mail(self.emails, 4, main_mail, main_password)
+        print("num_processes: ", num_processes)
+        print("main_mail: ", main_mail)
+        print("main_password: ", main_password)
+        print("path_firefox: ", path_firefox)
+        print("key_thuesim: ", key_thuesim)
+        # main_mail = "nhanmailao@minh.live"
+        # main_password = "Team1234@"
+
+        process_all_mail(self.emails, int(num_processes), main_mail, main_password, path_firefox, key_thuesim)
+        # process_all_mail(self.emails, 4, main_mail, main_password)
 
 
 if __name__ == '__main__':
