@@ -1,4 +1,5 @@
 import sqlite3
+from loguru import logger
 from concurrent.futures import ThreadPoolExecutor
 from tkinter import Label, NORMAL, DISABLED, Entry, Radiobutton, IntVar, Button
 from tkinter.filedialog import askopenfile
@@ -563,14 +564,14 @@ def delete_phone(driver):
     """Use when all step is done"""
     print("delete_phone1111111")
     driver.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
-    print("delete_phone2222222")
+    print("delete_phone222222222")
     wait_until_page_success(driver)
     try:
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "idRemoveAssocPhone"))).click()
         WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
     except:
         pass
-
+    driver.close()
 
 def create_main_mail_box(driver, main_mail, main_pass):
     driver.get(
@@ -685,7 +686,9 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             try:
                 delete_phone(driver)
                 return [mail, password, mail_protect, "success"]
-            except:
+
+            except Exception as e:
+                logger.exception(e)
                 return [mail, password, mail_protect, "success-manual delete phone"]
 
         if case == 1:
@@ -701,7 +704,8 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             try:
                 delete_phone(driver)
                 return [mail, password, mail_protect, "success"]
-            except:
+            except Exception as e:
+                logger.exception(e)
                 return [mail, password, mail_protect, "success-manual delete phone"]
 
         if case == 3:
@@ -725,10 +729,15 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
     except CantProcessBuyPhone as cantProcessBuyPhone:
         return [mail, password, mail_protect, "CantProcessBuyPhone"]
     except Exception as e:
-        pass
+        raise e
+        return [mail, password, mail_protect, "manual"]
+
     finally:
-        driver.close()
-        print("DONEEEEEEEEEE")
+        try:
+            driver.close()
+            print("DONEEEEEEEEEE")
+        except Exception as e:
+            print("Exception final: ", e)
 
 
 def go_to_page_profile(driver):
