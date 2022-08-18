@@ -69,8 +69,10 @@ def login_mail(driver, mail, password):
     try:
         driver.get('https://login.live.com')
         wait_until_page_success(driver)
+        WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.ID, "footer")))
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "i0116"))).send_keys(mail)
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idSIButton9"))).click()
+        WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.ID, "footer")))
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "i0118"))).send_keys(password)
         WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idSIButton9"))).click()
     except:
@@ -426,12 +428,10 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
             pass
 
         try:
-            WebDriverWait(driver, 200).until(
-                EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']")))
-            driver.execute_script("arguments[0].click();",
-                                  driver.find_element(By.XPATH, "//*[text()='Enable forwarding']"))
+            WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']"))).click()
         except Exception as e:
-            print("#EEEEEEEEEEEE", email_protect_text, e)
+            logger.exception(email_protect_text)
+
         print("aaaaaaaaaaaaaaaaaaaaaa", email_protect_text)
         try:
             WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
@@ -439,40 +439,33 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
             pass
 
         WebDriverWait(driver, 200).until(
-            EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']")))
-        driver.execute_script("arguments[0].click();",
-                              driver.find_element(By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))
+            EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))).click()
+
         try:
             WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
         except Exception as e:
             pass
         print("bbbbbbbbbbbbbbbbbbbb", email_protect_text, email_protect_text.split("@")[0])
 
-        wait_until_page_success(driver)
         for i in range(20):
             try:
-                WebDriverWait(driver, 200).until(
+                WebDriverWait(driver, 50).until(
                     EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys(
                     email_protect_text.split("@")[0])
                 break
             except Exception as e:
-                WebDriverWait(driver, 200).until(
-                    EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']")))
-                driver.execute_script("arguments[0].click();",
-                                      driver.find_element(By.XPATH, "//*[text()='Enable forwarding']"))
-                WebDriverWait(driver, 200).until(
-                    EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']")))
-                driver.execute_script("arguments[0].click();",
-                                      driver.find_element(By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))
-                print("Exception Enter an email address: ", str(e), email_protect_text)
+                WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']"))).click()
+                WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))).click()
+                logger.exception(email_protect_text)
+
 
         try:
             WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
         except Exception as e:
             pass
+
         print("cccccccccccccccccccc", email_protect_text)
-        WebDriverWait(driver, 200).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("@")
+        WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("@")
 
         try:
             WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
@@ -552,26 +545,28 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
             pass
         print("oooooooooooooooooooooooooo", email_protect_text)
 
-        WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']")))
         # todo: uncomment
-        driver.execute_script("arguments[0].click();", driver.find_element(By.XPATH, "//*[text()='Save']"))
+        WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
+
     insert_db(mail)
 
     print("SUCCESS add forwarding mail: ", email_protect_text)
+    return driver
 
 
-def delete_phone(driver):
+def delete_phone(driver, path_firefox, mail, password, browser_):
     """Use when all step is done"""
     print("delete_phone1111111")
     driver.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
     print("delete_phone222222222")
     wait_until_page_success(driver)
     try:
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "idRemoveAssocPhone"))).click()
-        WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
+        WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.ID, "idRemoveAssocPhone"))).click()
+        WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
     except:
         pass
     driver.close()
+
 
 def create_main_mail_box(driver, main_mail, main_pass):
     driver.get(
@@ -630,7 +625,7 @@ def process_after_login(driver, driver1, mail):
 
 def process_after_login_case(driver):
     wait_until_page_success(driver)
-    WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.ID, "footer")))
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "footer")))
     # driver.save_full_page_screenshot("html/{}.png".format("AAAAAAAA"))
 
     if "We've detected something unusual about this sign-in. For example, you might be signing in from a new location, device or app." in driver.page_source:
@@ -661,12 +656,6 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
     try:
         login_mail(driver, mail, password)
 
-        # process_after_login(driver, driver_main_mail, mail)
-        # add_protect_mail(driver, mail_protect, driver_main_mail)
-        # verify_by_mail(driver, mail, driver_main_mail)
-        # setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
-        # delete_phone(driver)
-
         case = process_after_login_case(driver)
 
         wait_until_page_success(driver)
@@ -682,14 +671,14 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             go_to_page_profile(driver)
             verify_by_mail(driver, mail_protect, driver_main_mail)
             enable_setting_forward_mail(driver, key_thuesim)
-            setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            driver0 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
             try:
-                delete_phone(driver)
+                delete_phone(driver0, path_firefox, mail, password, driver_main_mail)
                 return [mail, password, mail_protect, "success"]
 
             except Exception as e:
                 logger.exception(e)
-                return [mail, password, mail_protect, "success-manual delete phone"]
+                return [mail, password, mail_protect, "error delete phone"]
 
         if case == 1:
             return [mail, password, mail_protect, "manual process"]
@@ -700,13 +689,13 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             go_to_page_profile(driver)
             verify_by_mail(driver, mail_protect, driver_main_mail)
             enable_setting_forward_mail(driver, key_thuesim)
-            setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
             try:
-                delete_phone(driver)
+                delete_phone(driver2, path_firefox, mail, password, driver_main_mail)
                 return [mail, password, mail_protect, "success"]
             except Exception as e:
                 logger.exception(e)
-                return [mail, password, mail_protect, "success-manual delete phone"]
+                return [mail, password, mail_protect, "error delete phone"]
 
         if case == 3:
             reactive_by_phone(driver, key_thuesim)
@@ -715,7 +704,8 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             go_to_page_profile(driver)
             verify_by_mail(driver, mail, driver_main_mail)
             enable_setting_forward_mail(driver, key_thuesim)
-            setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            driver3 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            driver3.close()
             return [mail, password, mail_protect, "success"]
 
     except LoginFailException as loginFailException:
@@ -729,7 +719,8 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
     except CantProcessBuyPhone as cantProcessBuyPhone:
         return [mail, password, mail_protect, "CantProcessBuyPhone"]
     except Exception as e:
-        raise e
+        logger.info("UNKNOWN E: ", mail_protect)
+        logger.exception(e)
         return [mail, password, mail_protect, "manual"]
 
     finally:
