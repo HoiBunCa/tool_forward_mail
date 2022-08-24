@@ -632,23 +632,34 @@ def process_after_login_case(driver):
     elif "For your security and to ensure that only you have access to your account, we will ask you to verify your identity and change your password." in driver.page_source:
         case = 1
         # truong hop thay doi mat khau thi tu xu ly bang tay
-    elif "Stay signed in so you don't have to sign in again next time." in driver.page_source or "As part of our effort to improve your experience across our consumer services, we're updating the Microsoft Services Agreement. We want to take this opportunity to notify you about this update." in driver.page_source:
+    #elif "Stay signed in so you don't have to sign in again next time." in driver.page_source:
+    elif "Stay signed in so you don't have to sign in again next time." in driver.page_source:
         case = 2
         # truong hop login binh thuong
     elif "and we'll send a verification code to your phone. After you enter the code, you can get back into your account." in driver.page_source:
         case = 3
         # truong hop bi khoa, can thue sdt de kich hoat lai, truong hop nay ko can xoa sdt sau khi setting mail
+    elif "As part of our effort to improve your experience across our consumer services, we're updating the Microsoft Services Agreement. We want to take this opportunity to notify you about this update." in driver.page_source:
+        case = 4
+        # truong hop login xong nhay den man hinh thong bao update
     else:
         case = -1
     print("CASE: ", case)
     return case
 
 
+def pass_screen_update(driver):
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idBtn_Back"))).click()
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='home.banner.change-password-column.cta']")))
+    print("Pass pass_screen_update")
+
+
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim):
-    # mail_used = check_mail_used(mail)
-    # if mail_used == "Mail used":
-    #     print("forwarded: ", mail)
-    #     return [mail, password, mail_protect, "forwarded"]
+    mail_used = check_mail_used(mail)
+    if mail_used == "Mail used":
+        print("forwarded: ", mail)
+        return [mail, password, mail_protect, "forwarded"]
 
     driver = create_driver(path_firefox)
     try:
@@ -684,17 +695,16 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
         if case == 2:
             go_to_page_profile(driver)
             add_protect_mail(driver, mail_protect, driver_main_mail)
-            time.sleep(100)
-            # go_to_page_profile(driver)
-            # verify_by_mail(driver, mail_protect, driver_main_mail)
-            # enable_setting_forward_mail(driver, key_thuesim)
-            # driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
-            # try:
-            #     delete_phone(driver2, path_firefox, mail, password, driver_main_mail)
-            #     return [mail, password, mail_protect, "success"]
-            # except Exception as e:
-            #     logger.exception(e)
-            #     return [mail, password, mail_protect, "error delete phone"]
+            go_to_page_profile(driver)
+            verify_by_mail(driver, mail_protect, driver_main_mail)
+            enable_setting_forward_mail(driver, key_thuesim)
+            driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            try:
+                delete_phone(driver2, path_firefox, mail, password, driver_main_mail)
+                return [mail, password, mail_protect, "success"]
+            except Exception as e:
+                logger.exception(e)
+                return [mail, password, mail_protect, "error delete phone"]
 
         if case == 3:
             reactive_by_phone(driver, key_thuesim)
@@ -706,6 +716,21 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             driver3 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
             driver3.close()
             return [mail, password, mail_protect, "success"]
+
+        if case == 4:
+            pass_screen_update(driver)
+            go_to_page_profile(driver)
+            add_protect_mail(driver, mail_protect, driver_main_mail)
+            go_to_page_profile(driver)
+            verify_by_mail(driver, mail_protect, driver_main_mail)
+            enable_setting_forward_mail(driver, key_thuesim)
+            driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            try:
+                delete_phone(driver2, path_firefox, mail, password, driver_main_mail)
+                return [mail, password, mail_protect, "success"]
+            except Exception as e:
+                logger.exception(e)
+                return [mail, password, mail_protect, "error delete phone"]
 
     except LoginFailException as loginFailException:
         print("LoginFailException: ", mail)
@@ -858,8 +883,9 @@ class MyWindow:
         print("main_password: ", main_password)
         print("path_firefox: ", path_firefox)
         print("key_thuesim: ", key_thuesim)
-        # main_mail = "nhanmailao@minh.live"
-        # main_password = "Team1234@"
+        main_mail = "nhanmailao@minh.live"
+        main_password = "Team12345!"
+        key_thuesim = "5ec165c3b6eae475"
 
         process_all_mail(self.emails, int(num_processes), main_mail, main_password, path_firefox, key_thuesim)
         # process_all_mail(self.emails, 4, main_mail, main_password)
