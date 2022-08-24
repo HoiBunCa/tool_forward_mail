@@ -232,21 +232,26 @@ def check_mail_has_phone(driver):
 
 def go_to_page_forwarding(driver):
     driver.get("https://outlook.live.com/mail/0/options/mail/layout")
-
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable(
-        (By.XPATH, "//input[contains(@title, 'Search settings')] | //a[contains(text(), 'Sign in')]")))
-    if 'Try premium' in driver.page_source:
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//a[text()='Sign in']"))).click()
-    WebDriverWait(driver, 100).until(
-        EC.element_to_be_clickable((By.XPATH, "//input[contains(@title, 'Search settings')]")))
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
-                                                                 "//p[contains(text(), 'You can forward your email to another account.')] | //div[contains(text(), 'Unable to load these settings. Please try again later.')]")))
-    driver.refresh()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
-                                                                 "//p[contains(text(), 'You can forward your email to another account.')] | //div[contains(text(), 'Unable to load these settings. Please try again later.')]")))
-    # driver.save_full_page_screenshot("html/{}.png".format("AAAAAA"))
+    for i in range(5):
+        try:
+            WebDriverWait(driver, 100).until(EC.element_to_be_clickable(
+                (By.XPATH, "//input[contains(@title, 'Search settings')] | //a[contains(text(), 'Sign in')]")))
+            if 'Try premium' in driver.page_source:
+                WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//a[text()='Sign in']"))).click()
+            WebDriverWait(driver, 100).until(
+                EC.element_to_be_clickable((By.XPATH, "//input[contains(@title, 'Search settings')]")))
+            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
+            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
+                                                                         "//p[contains(text(), 'You can forward your email to another account.')] | //div[contains(text(), 'Unable to load these settings. Please try again later.')]")))
+            driver.refresh()
+            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
+            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
+                                                                         "//p[contains(text(), 'You can forward your email to another account.')] | //div[contains(text(), 'Unable to load these settings. Please try again later.')]")))
+            break
+        except:
+            logger.exception("EEEEEEEEEE go_to_page_forwarding")
+            driver.save_full_page_screenshot("html/{}.png".format(time.time()))
+            pass
 
 
 def enable_setting_forward_mail(driver, key_chothuesim):
