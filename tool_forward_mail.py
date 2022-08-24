@@ -556,9 +556,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
 
 def delete_phone(driver, path_firefox, mail, password, browser_):
     """Use when all step is done"""
-    print("delete_phone1111111")
     driver.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
-    print("delete_phone222222222")
     wait_until_page_success(driver)
     try:
         WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.ID, "idRemoveAssocPhone"))).click()
@@ -576,8 +574,8 @@ def create_main_mail_box(driver, main_mail, main_pass):
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-passwd"))).send_keys(main_pass)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
     wait_until_page_success(driver)
-    WebDriverWait(driver, 100).until(
-        EC.element_to_be_clickable((By.XPATH, "//*[text()='Microsoft account security code']"))).click()
+    # WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Microsoft account security code']"))).click()
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
     print("Init Mail box browser")
     return driver
 
@@ -634,7 +632,7 @@ def process_after_login_case(driver):
     elif "For your security and to ensure that only you have access to your account, we will ask you to verify your identity and change your password." in driver.page_source:
         case = 1
         # truong hop thay doi mat khau thi tu xu ly bang tay
-    elif "Stay signed in so you don't have to sign in again next time." in driver.page_source:
+    elif "Stay signed in so you don't have to sign in again next time." in driver.page_source or "As part of our effort to improve your experience across our consumer services, we're updating the Microsoft Services Agreement. We want to take this opportunity to notify you about this update." in driver.page_source:
         case = 2
         # truong hop login binh thuong
     elif "and we'll send a verification code to your phone. After you enter the code, you can get back into your account." in driver.page_source:
@@ -647,10 +645,10 @@ def process_after_login_case(driver):
 
 
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim):
-    mail_used = check_mail_used(mail)
-    if mail_used == "Mail used":
-        print("forwarded: ", mail)
-        return [mail, password, mail_protect, "forwarded"]
+    # mail_used = check_mail_used(mail)
+    # if mail_used == "Mail used":
+    #     print("forwarded: ", mail)
+    #     return [mail, password, mail_protect, "forwarded"]
 
     driver = create_driver(path_firefox)
     try:
@@ -686,16 +684,17 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
         if case == 2:
             go_to_page_profile(driver)
             add_protect_mail(driver, mail_protect, driver_main_mail)
-            go_to_page_profile(driver)
-            verify_by_mail(driver, mail_protect, driver_main_mail)
-            enable_setting_forward_mail(driver, key_thuesim)
-            driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
-            try:
-                delete_phone(driver2, path_firefox, mail, password, driver_main_mail)
-                return [mail, password, mail_protect, "success"]
-            except Exception as e:
-                logger.exception(e)
-                return [mail, password, mail_protect, "error delete phone"]
+            time.sleep(100)
+            # go_to_page_profile(driver)
+            # verify_by_mail(driver, mail_protect, driver_main_mail)
+            # enable_setting_forward_mail(driver, key_thuesim)
+            # driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            # try:
+            #     delete_phone(driver2, path_firefox, mail, password, driver_main_mail)
+            #     return [mail, password, mail_protect, "success"]
+            # except Exception as e:
+            #     logger.exception(e)
+            #     return [mail, password, mail_protect, "error delete phone"]
 
         if case == 3:
             reactive_by_phone(driver, key_thuesim)
@@ -768,7 +767,7 @@ class MyWindow:
         self.diver1 = None
 
         self.main_email = "nhanmailao@minh.live"
-        self.main_email_password = "Team1234@"
+        self.main_email_password = "Team12345!"
         self.api_key = "5ec165c3b6eae475"
         self.num_worker = 1
         self.HEADLESS = False
