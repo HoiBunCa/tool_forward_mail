@@ -228,59 +228,50 @@ def reactive_by_phone(driver, key_chothuesim):
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "microsoft")))
 
 
-def check_mail_has_phone(driver):
-    pass
-
-
-def _try_disable_advertise(driver):
-    try:
-        cancel_button = WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
-            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]')))
-
-        cancel_button.click()
-        WebDriverWait(driver, 5).until(EC.invisibility_of_element_located((By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]')))
-    except Exception as e:
-        pass
-
-
-def _try_click_element(driver, element, retry=0):
-    try:
-        element.click()
-    except selenium.common.exceptions.ElementClickInterceptedException as e:
-        if retry >= 5:
-            # debug_driver(driver, '_try_click_element')
-            raise e
-        _try_disable_advertise(driver)
-        _try_click_element(driver, element, retry + 1)
-
-
 def go_to_page_forwarding(driver):
-    driver.get("https://outlook.live.com/mail/0/options/mail/layout")
+    print("go_to_page_forwarding")
+    flag = 0
+    try:
+        driver.get("https://outlook.live.com/mail/0/options/mail/layout")
 
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable(
-        (By.XPATH, "//input[contains(@id, 'optionSearch')] | //a[contains(text(), 'Sign in')]")))
-    if 'Try premium' in driver.page_source:
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//a[text()='Sign in']"))).click()
-    WebDriverWait(driver, 100).until(
-        EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')]")))
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
-                                                                 "//p[contains(text(), 'You can forward your email to another account.')] | //div[contains(text(), 'Unable to load these settings. Please try again later.')]")))
-    driver.refresh()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
-                                                                         "//p[contains(text(), 'You can forward your email to another account.')] | //div[contains(text(), 'Unable to load these settings. Please try again later.')]")))
+        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')] | //a[contains(text(), 'Sign in')]")))
+        if 'Try premium' in driver.page_source:
+            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//a[text()='Sign in']"))).click()
+        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')]")))
+        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[4]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div/button[10]/span/span/span"))).click()
+        # WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p | //*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2])]")))
+        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]")))
+        driver.refresh()
+        # btn Forwarding
+        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[4]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div/button[10]/span/span/span"))).click()
+        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]")))
+        flag = 1
+    except:
+        driver.refresh()
 
 
+    return flag
+
+# WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]')))
 
 def enable_setting_forward_mail(driver, key_chothuesim):
     print("enable_setting_forward_mail")
-    go_to_page_forwarding(driver)
 
-    if "You can forward your email to another account." in driver.page_source:
+    for i in range(10):
+        flag = go_to_page_forwarding(driver)
+        if flag:
+            break
+
+    # if "You can forward your email to another account." in driver.page_source:
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p")))
+        print(111111111111111)
+        print(222222222222222)
         pass
-    else:
+    except:
         # thue sdt
+        print(3333333333333333)
+        print(4444444444444444)
         driver.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
         for i in range(10):
             try:
@@ -687,10 +678,10 @@ def pass_screen_update(driver):
 
 
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim):
-    mail_used = check_mail_used(mail)
-    if mail_used == "Mail used":
-        print("forwarded: ", mail)
-        return [mail, password, mail_protect, "forwarded"]
+    # mail_used = check_mail_used(mail)
+    # if mail_used == "Mail used":
+    #     print("forwarded: ", mail)
+    #     return [mail, password, mail_protect, "forwarded"]
 
     driver = create_driver(path_firefox)
     try:
@@ -904,7 +895,7 @@ class MyWindow:
         main_mail = "nhanmailao@minh.live"
         main_password = "Team12345!"
         key_thuesim = "5ec165c3b6eae475"
-        path_firefox = "C:/Program Files/Mozilla Firefox/firefox.exe"
+        # path_firefox = "C:/Program Files/Mozilla Firefox/firefox.exe"
 
         process_all_mail(self.emails, int(num_processes), main_mail, main_password, path_firefox, key_thuesim)
         # process_all_mail(self.emails, 4, main_mail, main_password)
