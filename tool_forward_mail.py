@@ -1,4 +1,6 @@
 import sqlite3
+
+import selenium
 from loguru import logger
 from concurrent.futures import ThreadPoolExecutor
 from tkinter import Label, NORMAL, DISABLED, Entry, Radiobutton, IntVar, Button
@@ -230,28 +232,45 @@ def check_mail_has_phone(driver):
     pass
 
 
+def _try_disable_advertise(driver):
+    try:
+        cancel_button = WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]')))
+
+        cancel_button.click()
+        WebDriverWait(driver, 5).until(EC.invisibility_of_element_located((By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]')))
+    except Exception as e:
+        pass
+
+
+def _try_click_element(driver, element, retry=0):
+    try:
+        element.click()
+    except selenium.common.exceptions.ElementClickInterceptedException as e:
+        if retry >= 5:
+            # debug_driver(driver, '_try_click_element')
+            raise e
+        _try_disable_advertise(driver)
+        _try_click_element(driver, element, retry + 1)
+
+
 def go_to_page_forwarding(driver):
     driver.get("https://outlook.live.com/mail/0/options/mail/layout")
-    for i in range(5):
-        try:
-            WebDriverWait(driver, 100).until(EC.element_to_be_clickable(
-                (By.XPATH, "//input[contains(@title, 'Search settings')] | //a[contains(text(), 'Sign in')]")))
-            if 'Try premium' in driver.page_source:
-                WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//a[text()='Sign in']"))).click()
-            WebDriverWait(driver, 100).until(
-                EC.element_to_be_clickable((By.XPATH, "//input[contains(@title, 'Search settings')]")))
-            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
-            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
+
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable(
+        (By.XPATH, "//input[contains(@id, 'optionSearch')] | //a[contains(text(), 'Sign in')]")))
+    if 'Try premium' in driver.page_source:
+        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//a[text()='Sign in']"))).click()
+    WebDriverWait(driver, 100).until(
+        EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')]")))
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
+                                                                 "//p[contains(text(), 'You can forward your email to another account.')] | //div[contains(text(), 'Unable to load these settings. Please try again later.')]")))
+    driver.refresh()
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
                                                                          "//p[contains(text(), 'You can forward your email to another account.')] | //div[contains(text(), 'Unable to load these settings. Please try again later.')]")))
-            driver.refresh()
-            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Forwarding']"))).click()
-            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
-                                                                         "//p[contains(text(), 'You can forward your email to another account.')] | //div[contains(text(), 'Unable to load these settings. Please try again later.')]")))
-            break
-        except:
-            logger.exception("EEEEEEEEEE go_to_page_forwarding")
-            driver.save_full_page_screenshot("html/{}.png".format(time.time()))
-            pass
+
 
 
 def enable_setting_forward_mail(driver, key_chothuesim):
@@ -629,6 +648,9 @@ def process_after_login(driver, driver1, mail):
 def process_after_login_case(driver):
     wait_until_page_success(driver)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "footer")))
+
+    pass_screen_update(driver)
+
     # driver.save_full_page_screenshot("html/{}.png".format("AAAAAAAA"))
 
     if "We've detected something unusual about this sign-in. For example, you might be signing in from a new location, device or app." in driver.page_source:
@@ -644,9 +666,7 @@ def process_after_login_case(driver):
     elif "and we'll send a verification code to your phone. After you enter the code, you can get back into your account." in driver.page_source:
         case = 3
         # truong hop bi khoa, can thue sdt de kich hoat lai, truong hop nay ko can xoa sdt sau khi setting mail
-    elif "As part of our effort to improve your experience across our consumer services, we're updating the Microsoft Services Agreement. We want to take this opportunity to notify you about this update." in driver.page_source:
-        case = 4
-        # truong hop login xong nhay den man hinh thong bao update
+
     else:
         case = -1
     print("CASE: ", case)
@@ -654,9 +674,15 @@ def process_after_login_case(driver):
 
 
 def pass_screen_update(driver):
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idBtn_Back"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='home.banner.change-password-column.cta']")))
+    if "As part of our effort to improve your experience across our consumer services, we're updating the Microsoft Services Agreement. We want to take this opportunity to notify you about this update." in driver.page_source:
+        # truong hop login xong nhay den man hinh thong bao update
+        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
+        WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.ID, "footer")))
+        # WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idBtn_Back"))).click()
+        # WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='home.banner.change-password-column.cta']")))
+    else:
+        pass
+
     print("Pass pass_screen_update")
 
 
@@ -722,20 +748,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             driver3.close()
             return [mail, password, mail_protect, "success"]
 
-        if case == 4:
-            pass_screen_update(driver)
-            go_to_page_profile(driver)
-            add_protect_mail(driver, mail_protect, driver_main_mail)
-            go_to_page_profile(driver)
-            verify_by_mail(driver, mail_protect, driver_main_mail)
-            enable_setting_forward_mail(driver, key_thuesim)
-            driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
-            try:
-                delete_phone(driver2, path_firefox, mail, password, driver_main_mail)
-                return [mail, password, mail_protect, "success"]
-            except Exception as e:
-                logger.exception(e)
-                return [mail, password, mail_protect, "error delete phone"]
+
 
     except LoginFailException as loginFailException:
         print("LoginFailException: ", mail)
@@ -891,6 +904,7 @@ class MyWindow:
         main_mail = "nhanmailao@minh.live"
         main_password = "Team12345!"
         key_thuesim = "5ec165c3b6eae475"
+        path_firefox = "C:/Program Files/Mozilla Firefox/firefox.exe"
 
         process_all_mail(self.emails, int(num_processes), main_mail, main_password, path_firefox, key_thuesim)
         # process_all_mail(self.emails, 4, main_mail, main_password)
