@@ -71,13 +71,13 @@ def login_mail(driver, mail, password):
     try:
         driver.get('https://login.live.com')
         wait_until_page_success(driver)
-        WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.ID, "footer")))
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "i0116"))).send_keys(mail)
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idSIButton9"))).click()
-        WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.ID, "footer")))
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "i0118"))).send_keys(password)
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idSIButton9"))).click()
-    except:
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "i0116"))).send_keys(mail)
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idSIButton9"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "i0118"))).send_keys(password)
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idSIButton9"))).click()
+    except Exception as e:
+        driver.save_full_page_screenshot("html/{}.png".format(mail.split("@")[0]))
+        logger.exception(mail, e)
         raise LoginFailException("Login fail")
 
 
@@ -85,10 +85,10 @@ def mask_mail_as_read(driver, code_of_mail):
     for i in range(50):
         try:
             emails = driver.find_elements(By.XPATH,
-                                          f'//div[contains(@class, "ns-view-messages-item-inner ")]/div/div/div/div[contains(@aria-label, "{code_of_mail}")]/div/a/div/span/span[contains(@title, "Mark as read")]')
+                                          f'//div/div/div/div[contains(@aria-label, "{code_of_mail}")]/div/a/div/span/span[contains(@title, "Mark as read")]')
             if len(emails):
                 WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH,
-                                                                           f'//div[contains(@class, "ns-view-messages-item-inner ")]/div/div/div/div[contains(@aria-label, "{code_of_mail}")]/div/a/div/span/span[contains(@title, "Mark as read")]'))).click()
+                                                                           f'//div/div/div/div[contains(@aria-label, "{code_of_mail}")]/div/a/div/span/span[contains(@title, "Mark as read")]'))).click()
             break
         except Exception as e:
             print("Exception when mask_as_read: ", code_of_mail, e)
@@ -101,8 +101,8 @@ def get_code_by_mail(driver, email):
     mail_n = mail_s[0] + mail_s[1] + "**" + mail_s[-1]
     sent1 = "unread"
     sent2 = mail_n
-
-    sent_all = f'//div[contains(@class, "ns-view-messages-item-inner ")]/div/div/div/div[contains(@aria-label, "{sent1}") and contains(@aria-label, "{sent2}")]'
+    # f'//div[contains(@class, "ns-view-messages-item-inner ")]/div/div/div/div[contains(@aria-label, "unread") and contains(@aria-label, "bo**m")]'
+    sent_all = f'//div/div/div/div[contains(@aria-label, "{sent1}") and contains(@aria-label, "{sent2}")]'
     emails = driver.find_elements(By.XPATH, sent_all)
     if type(emails) == list:
         if len(emails) == 0:
@@ -117,6 +117,7 @@ def get_code_by_mail(driver, email):
             return code
     else:
         return None
+
 
 
 def buy_phone(key_chothuesim):
@@ -163,12 +164,12 @@ def process_code_verify(driver, bill_id, nums0=0, nums1=0, key_chothuesim=""):
                         EC.element_to_be_clickable((By.XPATH, "//*[text()='I didn’t get a code']"))).click()
                 except:
                     pass
-                WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).clear()
+                WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//input"))).clear()
                 time.sleep(2)
                 phone_num1, bill_id1 = buy_phone(key_chothuesim)
-                WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(
+                WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(
                     phone_num1)
-                WebDriverWait(driver, 100).until(
+                WebDriverWait(driver, 50).until(
                     EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
                 return process_code_verify(driver, bill_id1, 0, nums1 + 1, key_chothuesim)
             return process_code_verify(driver, bill_id, nums0 + 1, nums1, key_chothuesim)
@@ -191,13 +192,13 @@ def process_code_verify23(browser, bill_id, nums0=0, nums1=0, key_chothuesim="")
         if reponse_code == -1:
             if nums0 == 7:
                 browser.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
-                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
-                WebDriverWait(browser, 100).until(
+                WebDriverWait(browser, 50).until(EC.element_to_be_clickable((By.ID, "idAddPhoneAliasLink"))).click()
+                WebDriverWait(browser, 50).until(
                     EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
                 phone_num1, bill_id1 = buy_phone(key_chothuesim)
-                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
+                WebDriverWait(browser, 50).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
                     phone_num1)
-                WebDriverWait(browser, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
+                WebDriverWait(browser, 50).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
                 return process_code_verify23(browser, bill_id1, 0, nums1 + 1, key_chothuesim)
             return process_code_verify23(browser, bill_id, nums0 + 1, nums1, key_chothuesim)
     except Exception as e:
@@ -207,25 +208,33 @@ def process_code_verify23(browser, bill_id, nums0=0, nums1=0, key_chothuesim="")
 
 def reactive_by_phone(driver, key_chothuesim):
     """Use when mail is locked. After login"""
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "StartAction"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "StartAction"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
     phone_num, phone_num_id = buy_phone(key_chothuesim)
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(phone_num)
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(phone_num)
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Send code']"))).click()
 
     phone_code_verify = process_code_verify(driver, phone_num_id, 0, 0, key_chothuesim)
     if phone_code_verify is None:
         raise CantReceiveCodeFromApiBuyPhone("Cant receive code from api buy phone - reactive_by_phone")
 
-    WebDriverWait(driver, 100).until(
+    WebDriverWait(driver, 50).until(
         EC.element_to_be_clickable((By.XPATH, "//input[@aria-label='Enter the access code']"))).send_keys(
         phone_code_verify)
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "ProofAction"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "ProofAction"))).click()
 
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "FinishAction"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idBtn_Back"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "FinishAction"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idBtn_Back"))).click()
 
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "microsoft")))
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "microsoft")))
+
+
+def skip_popup_adv(driver):
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]')))
+    except:
+        pass
 
 
 def go_to_page_forwarding(driver):
@@ -233,24 +242,35 @@ def go_to_page_forwarding(driver):
     flag = 0
     try:
         driver.get("https://outlook.live.com/mail/0/options/mail/layout")
-
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')] | //a[contains(text(), 'Sign in')]")))
+        skip_popup_adv(driver)
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable(
+            (By.XPATH, "//input[contains(@id, 'optionSearch')] | //a[contains(text(), 'Sign in')]")))
         if 'Try premium' in driver.page_source:
-            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//a[text()='Sign in']"))).click()
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')]")))
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[4]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div/button[10]/span/span/span"))).click()
-        # WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p | //*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2])]")))
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]")))
+            WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//a[text()='Sign in']"))).click()
+        skip_popup_adv(driver)
+        WebDriverWait(driver, 50).until(
+            EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')]")))
+        skip_popup_adv(driver)
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH,
+                                                                    "/html/body/div[4]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div/button[10]/span/span/span"))).click()
+        # WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p | //*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2])]")))
+        skip_popup_adv(driver)
+        WebDriverWait(driver, 50).until(
+            EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]")))
         driver.refresh()
         # btn Forwarding
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[4]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div/button[10]/span/span/span"))).click()
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]")))
+        skip_popup_adv(driver)
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH,
+                                                                    "/html/body/div[4]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div/button[10]/span/span/span"))).click()
+        skip_popup_adv(driver)
+        WebDriverWait(driver, 50).until(
+            EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]")))
         flag = 1
     except:
         driver.refresh()
 
-
     return flag
+
 
 # WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]')))
 
@@ -264,7 +284,8 @@ def enable_setting_forward_mail(driver, key_chothuesim):
 
     # if "You can forward your email to another account." in driver.page_source:
     try:
-        WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p")))
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p")))
         print(111111111111111)
         print(222222222222222)
         pass
@@ -289,29 +310,29 @@ def enable_setting_forward_mail(driver, key_chothuesim):
                 raise CantProcessBuyPhone("Cant Process Buy Phone")
 
         phone_num_th23, phone_num_id_th23 = buy_phone(key_chothuesim)
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "DisplayPhoneNumber"))).send_keys(
             phone_num_th23)  # nhap sdt
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
         phone_code_verify23 = process_code_verify23(driver, phone_num_id_th23, 0, 0, key_chothuesim)
         if phone_code_verify23 is None:
             raise CantReceiveCodeFromApiBuyPhone("Cant receive code from api buy phone - enable_setting_forward_mail")
 
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(
             phone_code_verify23)  # nhap code
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iBtn_action"))).click()
         wait_until_page_success(driver)
         go_to_page_forwarding(driver)
 
 
 def add_protect_mail(driver, mail, browser_):
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable(
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable(
         (By.XPATH, "//input[contains(@id, 'EmailAddress')] | //div[contains(@id, 'idDiv_SAOTCS_Proofs')]")))
     if not "Passwords can be forgotten or stolen. Just in case, add security info now to help you get back into your account if something goes wrong. " in driver.page_source:
         return
 
     code = None
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "EmailAddress"))).send_keys(mail)
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "EmailAddress"))).send_keys(mail)
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
     print("MAIL::: ", mail)
     for i in range(50):
         time.sleep(2)
@@ -325,22 +346,22 @@ def add_protect_mail(driver, mail, browser_):
     if code is None:
         raise CantReceiveCodeFromEmailException("cant receive code from email")
 
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
     print("add_mail_protect done ::: ", mail)
 
 
 def verify_by_mail(driver, mail, browser_):
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs")))
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs")))
     if not "idDiv_SAOTCS_Proofs" in driver.page_source:
         return
 
     code = None
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCS_ProofConfirmation"))).send_keys(
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idDiv_SAOTCS_Proofs"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCS_ProofConfirmation"))).send_keys(
         mail)
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCS_SendCode"))).click()
-    WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.ID, "footer")))
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCS_SendCode"))).click()
+    WebDriverWait(driver, 50).until(EC.presence_of_element_located((By.ID, "footer")))
     wait_until_page_success(driver)
     if "We couldn't send the code. Please try again." in driver.page_source:
         raise CantReceiveCodeFromEmailException("We couldn't send the code. Please try again")
@@ -357,8 +378,8 @@ def verify_by_mail(driver, mail, browser_):
     if code is None:
         raise CantReceiveCodeFromEmailException("no have code")
 
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCC_OTC"))).send_keys(code)
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCC_Continue"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCC_OTC"))).send_keys(code)
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCC_Continue"))).click()
 
     wait_until_page_success(driver)
 
@@ -373,9 +394,9 @@ def verify_by_mail(driver, mail, browser_):
 
 def reactive_mail(driver, browser_, email_protect_text):
     code = None
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iProofEmail"))).send_keys(
         email_protect_text.split("@")[0])
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iSelectProofAction"))).click()
     for i in range(50):
         time.sleep(2)
         code = get_code_by_mail(driver=browser_, email=email_protect_text)
@@ -386,8 +407,8 @@ def reactive_mail(driver, browser_, email_protect_text):
         raise CantReceiveCodeFromEmailException("no have code")
 
     wait_until_page_success(driver)
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iVerifyCodeAction"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(code)
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iVerifyCodeAction"))).click()
 
 
 def relogin(driver, mail, password):
@@ -426,14 +447,14 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         except:
             pass
 
-        WebDriverWait(driver, 100).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))).click()
         try:
             WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
         except:
             pass
 
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
 
     except:
         print("1111111", email_protect_text)
@@ -443,7 +464,8 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
             pass
 
         try:
-            WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']"))).click()
+            WebDriverWait(driver, 50).until(
+                EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']"))).click()
         except Exception as e:
             logger.exception(email_protect_text)
 
@@ -453,7 +475,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         except Exception as e:
             pass
 
-        WebDriverWait(driver, 200).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))).click()
 
         try:
@@ -469,10 +491,11 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
                     email_protect_text.split("@")[0])
                 break
             except Exception as e:
-                WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']"))).click()
-                WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))).click()
+                WebDriverWait(driver, 50).until(
+                    EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']"))).click()
+                WebDriverWait(driver, 50).until(
+                    EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))).click()
                 logger.exception(email_protect_text)
-
 
         try:
             WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
@@ -480,14 +503,15 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
             pass
 
         print("cccccccccccccccccccc", email_protect_text)
-        WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("@")
+        WebDriverWait(driver, 50).until(
+            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("@")
 
         try:
             WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
         except Exception as e:
             pass
         print("ddddddddddddddddddddddd", email_protect_text)
-        WebDriverWait(driver, 200).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("m")
 
         try:
@@ -495,7 +519,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         except Exception as e:
             pass
         print("eeeeeeeeeeeeeeeeeeee", email_protect_text)
-        WebDriverWait(driver, 200).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("i")
 
         try:
@@ -503,7 +527,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         except Exception as e:
             pass
         print("ffffffffffffffffffff", email_protect_text)
-        WebDriverWait(driver, 200).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("n")
 
         try:
@@ -511,7 +535,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         except Exception as e:
             pass
         print("ggggggggggggggggggggg", email_protect_text)
-        WebDriverWait(driver, 200).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("h")
 
         try:
@@ -519,7 +543,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         except Exception as e:
             pass
         print("hhhhhhhhhhhhhhhhhhh", email_protect_text)
-        WebDriverWait(driver, 200).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys(".")
 
         try:
@@ -527,7 +551,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         except Exception as e:
             pass
         print("iiiiiiiiiiiiiiiiiiii", email_protect_text)
-        WebDriverWait(driver, 200).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("l")
 
         try:
@@ -535,7 +559,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         except Exception as e:
             pass
         print("kkkkkkkkkkkkkkkkkkkkkk", email_protect_text)
-        WebDriverWait(driver, 200).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("i")
 
         try:
@@ -543,7 +567,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         except Exception as e:
             pass
         print("lllllllllllllllllllll", email_protect_text)
-        WebDriverWait(driver, 200).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("v")
 
         try:
@@ -551,7 +575,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         except Exception as e:
             pass
         print("mmmmmmmmmmmmmmmmmmmmmmmm", email_protect_text)
-        WebDriverWait(driver, 200).until(
+        WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("e")
 
         try:
@@ -561,7 +585,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         print("oooooooooooooooooooooooooo", email_protect_text)
 
         # todo: uncomment
-        WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
 
     insert_db(mail)
 
@@ -588,12 +612,18 @@ def create_main_mail_box(driver, main_mail, main_pass):
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-passwd"))).send_keys(main_pass)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
-    wait_until_page_success(driver)
+    WebDriverWait(driver, 100).until(
+        EC.visibility_of_element_located((By.XPATH, '//a[@href="#inbox" and contains(@class, "Folder")]')))
     # WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Microsoft account security code']"))).click()
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
+
+    # driver.get('https://mail.yandex.com#folder/10')
+    driver.get(driver.current_url.replace("inbox", "folder/10"))
+    WebDriverWait(driver, 100).until(
+        EC.visibility_of_element_located((By.XPATH, '//a[@href="#inbox" and contains(@class, "Folder")]')))
+    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
+                                                                 '//div/div[contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
     print("Init Mail box browser")
     return driver
-
 
 def page_has_loaded(driver):
     try:
@@ -629,7 +659,7 @@ def process_after_login(driver, driver1, mail):
     wait_until_page_success(driver)
 
     if "We've detected something unusual about this sign-in. For example, you might be signing in from a new location, device or app." in driver.page_source:
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
         reactive_mail(driver, driver1, mail)
     if "For your security and to ensure that only you have access to your account, we will ask you to verify your identity and change your password." in driver.page_source:
         pass
@@ -638,7 +668,7 @@ def process_after_login(driver, driver1, mail):
 
 def process_after_login_case(driver):
     wait_until_page_success(driver)
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "footer")))
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "footer")))
 
     pass_screen_update(driver)
 
@@ -650,7 +680,7 @@ def process_after_login_case(driver):
     elif "For your security and to ensure that only you have access to your account, we will ask you to verify your identity and change your password." in driver.page_source:
         case = 1
         # truong hop thay doi mat khau thi tu xu ly bang tay
-    #elif "Stay signed in so you don't have to sign in again next time." in driver.page_source:
+    # elif "Stay signed in so you don't have to sign in again next time." in driver.page_source:
     elif "Stay signed in so you don't have to sign in again next time." in driver.page_source:
         case = 2
         # truong hop login binh thuong
@@ -667,10 +697,10 @@ def process_after_login_case(driver):
 def pass_screen_update(driver):
     if "As part of our effort to improve your experience across our consumer services, we're updating the Microsoft Services Agreement. We want to take this opportunity to notify you about this update." in driver.page_source:
         # truong hop login xong nhay den man hinh thong bao update
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
-        WebDriverWait(driver, 100).until(EC.presence_of_element_located((By.ID, "footer")))
-        # WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "idBtn_Back"))).click()
-        # WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='home.banner.change-password-column.cta']")))
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
+        WebDriverWait(driver, 50).until(EC.presence_of_element_located((By.ID, "footer")))
+        # WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idBtn_Back"))).click()
+        # WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[@id='home.banner.change-password-column.cta']")))
     else:
         pass
 
@@ -679,13 +709,18 @@ def pass_screen_update(driver):
 
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim):
     # mail_used = check_mail_used(mail)
-    # if mail_used == "Mail used":
+    # if mail_used == "Mail usedd":
     #     print("forwarded: ", mail)
     #     return [mail, password, mail_protect, "forwarded"]
 
     driver = create_driver(path_firefox)
     try:
-        login_mail(driver, mail, password)
+        for i in range(50):
+            try:
+                login_mail(driver, mail, password)
+                break
+            except:
+                pass
 
         case = process_after_login_case(driver)
 
@@ -695,14 +730,20 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
 
         if case == 0:
             wait_until_page_success(driver=driver)
-            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "proofDiv0"))).click()
+            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//input[contains(@id, "iProof")]'))).click()
             reactive_mail(driver, driver_main_mail, mail)
             go_to_page_profile(driver)
             add_protect_mail(driver, mail_protect, driver_main_mail)
             go_to_page_profile(driver)
             verify_by_mail(driver, mail_protect, driver_main_mail)
             enable_setting_forward_mail(driver, key_thuesim)
-            driver0 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            for i in range(10):
+                try:
+                    driver0 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+                    break
+                except:
+                    pass
+
             try:
                 delete_phone(driver0, path_firefox, mail, password, driver_main_mail)
                 return [mail, password, mail_protect, "success"]
@@ -719,8 +760,14 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             add_protect_mail(driver, mail_protect, driver_main_mail)
             go_to_page_profile(driver)
             verify_by_mail(driver, mail_protect, driver_main_mail)
+            return
             enable_setting_forward_mail(driver, key_thuesim)
-            driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            for i in range(10):
+                try:
+                    driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+                    break
+                except:
+                    pass
             try:
                 delete_phone(driver2, path_firefox, mail, password, driver_main_mail)
                 return [mail, password, mail_protect, "success"]
@@ -735,7 +782,13 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             go_to_page_profile(driver)
             verify_by_mail(driver, mail, driver_main_mail)
             enable_setting_forward_mail(driver, key_thuesim)
-            driver3 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+            for i in range(10):
+                try:
+                    driver3 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+                    break
+                except:
+                    pass
+
             driver3.close()
             return [mail, password, mail_protect, "success"]
 
