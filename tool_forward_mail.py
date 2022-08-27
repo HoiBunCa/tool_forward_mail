@@ -708,10 +708,10 @@ def pass_screen_update(driver):
 
 
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim):
-    # mail_used = check_mail_used(mail)
-    # if mail_used == "Mail usedd":
-    #     print("forwarded: ", mail)
-    #     return [mail, password, mail_protect, "forwarded"]
+    mail_used = check_mail_used(mail)
+    if mail_used == "Mail usedd":
+        print("forwarded: ", mail)
+        return [mail, password, mail_protect, "forwarded"]
 
     driver = create_driver(path_firefox)
     try:
@@ -730,7 +730,8 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
 
         if case == 0:
             wait_until_page_success(driver=driver)
-            WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//input[contains(@id, "iProof")]'))).click()
+            WebDriverWait(driver, 100).until(
+                EC.element_to_be_clickable((By.XPATH, '//input[contains(@id, "iProof")]'))).click()
             reactive_mail(driver, driver_main_mail, mail)
             go_to_page_profile(driver)
             add_protect_mail(driver, mail_protect, driver_main_mail)
@@ -760,7 +761,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             add_protect_mail(driver, mail_protect, driver_main_mail)
             go_to_page_profile(driver)
             verify_by_mail(driver, mail_protect, driver_main_mail)
-            return
+
             enable_setting_forward_mail(driver, key_thuesim)
             for i in range(10):
                 try:
