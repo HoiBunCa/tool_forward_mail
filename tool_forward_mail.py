@@ -119,7 +119,6 @@ def get_code_by_mail(driver, email):
         return None
 
 
-
 def buy_phone(key_chothuesim):
     """Call Api buy phone"""
     url = f"https://chothuesimcode.com/api?act=number&apik={key_chothuesim}&appId=1017&carrier=Viettel"
@@ -423,7 +422,10 @@ def relogin(driver, mail, password):
 
 def setting_forward(driver, email_protect_text, mail, password, driver_main_mail, path_firefox):
     go_to_page_forwarding(driver)
-    if "Unable to load these settings. Please try again later." in driver.page_source:
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p")))
+    except:
         driver.close()
         driver = create_driver(path_firefox)
         relogin(driver, mail, password)
@@ -433,159 +435,154 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         go_to_page_forwarding(driver)
 
     try:
-        WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
     except Exception as e:
         pass
 
+    print("setting_forward: ", email_protect_text)
     try:
-        print("00000000", email_protect_text)
-        WebDriverWait(driver, 5).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).is_enabled()
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
 
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[1]/label/span'))).click()
+
+    print("aaaaaaaaaaaaaaaaaaaaaa", email_protect_text)
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
+
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div[2]/label/span'))).click()
+
+    print("bbbbbbbbbbbbbbbbbbbb", email_protect_text, email_protect_text.split("@")[0])
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
+
+    for i in range(20):
         try:
-            WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except:
-            pass
-
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))).click()
-        try:
-            WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except:
-            pass
-
-        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
-
-    except:
-        print("1111111", email_protect_text)
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
+            WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys(email_protect_text.split("@")[0])
+            break
         except Exception as e:
-            pass
-
-        try:
-            WebDriverWait(driver, 50).until(
-                EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']"))).click()
-        except Exception as e:
+            WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[1]/label/span'))).click()
+            WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div[2]/label/span'))).click()
             logger.exception(email_protect_text)
 
-        print("aaaaaaaaaaaaaaaaaaaaaa", email_protect_text)
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
+    print("cccccccccccccccccccc", email_protect_text)
 
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))).click()
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("bbbbbbbbbbbbbbbbbbbb", email_protect_text, email_protect_text.split("@")[0])
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("@")
 
-        for i in range(20):
-            try:
-                WebDriverWait(driver, 50).until(
-                    EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys(
-                    email_protect_text.split("@")[0])
-                break
-            except Exception as e:
-                WebDriverWait(driver, 50).until(
-                    EC.element_to_be_clickable((By.XPATH, "//*[text()='Enable forwarding']"))).click()
-                WebDriverWait(driver, 50).until(
-                    EC.element_to_be_clickable((By.XPATH, "//*[text()='Keep a copy of forwarded messages']"))).click()
-                logger.exception(email_protect_text)
+    print("ddddddddddddddddddddddd", email_protect_text)
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("m")
 
-        print("cccccccccccccccccccc", email_protect_text)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("@")
+    print("eeeeeeeeeeeeeeeeeeee", email_protect_text)
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("ddddddddddddddddddddddd", email_protect_text)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("m")
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("i")
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("eeeeeeeeeeeeeeeeeeee", email_protect_text)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("i")
+    print("ffffffffffffffffffff", email_protect_text)
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("ffffffffffffffffffff", email_protect_text)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("n")
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("ggggggggggggggggggggg", email_protect_text)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("h")
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("n")
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("hhhhhhhhhhhhhhhhhhh", email_protect_text)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys(".")
+    print("ggggggggggggggggggggg", email_protect_text)
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("iiiiiiiiiiiiiiiiiiii", email_protect_text)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("l")
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("h")
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("kkkkkkkkkkkkkkkkkkkkkk", email_protect_text)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("i")
+    print("hhhhhhhhhhhhhhhhhhh", email_protect_text)
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("lllllllllllllllllllll", email_protect_text)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("v")
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("mmmmmmmmmmmmmmmmmmmmmmmm", email_protect_text)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[@placeholder='Enter an email address']"))).send_keys("e")
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys(".")
 
-        try:
-            WebDriverWait(driver, 1).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Cancel']"))).click()
-        except Exception as e:
-            pass
-        print("oooooooooooooooooooooooooo", email_protect_text)
+    print("iiiiiiiiiiiiiiiiiiii", email_protect_text)
 
-        # todo: uncomment
-        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
+
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("l")
+
+    print("kkkkkkkkkkkkkkkkkkkkkk", email_protect_text)
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
+
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("i")
+
+    print("lllllllllllllllllllll", email_protect_text)
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
+
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("v")
+
+    print("mmmmmmmmmmmmmmmmmmmmmmmm", email_protect_text)
+    try:
+        WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
+            (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
+    except Exception as e:
+        pass
+
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("e")
+
+    print("oooooooooooooooooooooooooo", email_protect_text)
+
+    # todo: uncomment
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
 
     insert_db(mail)
 
@@ -624,6 +621,7 @@ def create_main_mail_box(driver, main_mail, main_pass):
                                                                  '//div/div[contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
     print("Init Mail box browser")
     return driver
+
 
 def page_has_loaded(driver):
     try:
@@ -708,10 +706,10 @@ def pass_screen_update(driver):
 
 
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim):
-    mail_used = check_mail_used(mail)
-    if mail_used == "Mail usedd":
-        print("forwarded: ", mail)
-        return [mail, password, mail_protect, "forwarded"]
+    # mail_used = check_mail_used(mail)
+    # if mail_used == "Mail used":
+    #     print("forwarded: ", mail)
+    #     return [mail, password, mail_protect, "forwarded"]
 
     driver = create_driver(path_firefox)
     try:
@@ -742,8 +740,9 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
                 try:
                     driver0 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
                     break
-                except:
-                    pass
+                except Exception as e:
+                    driver.save_full_page_screenshot("html/{}.png".format(mail_protect.split("@")[0]))
+                    logger.exception(mail_protect, e)
 
             try:
                 delete_phone(driver0, path_firefox, mail, password, driver_main_mail)
@@ -767,8 +766,9 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
                 try:
                     driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
                     break
-                except:
-                    pass
+                except Exception as e:
+                    logger.exception(e)
+                    driver.save_full_page_screenshot("html/{}.png".format(mail_protect.split("@")[0]))
             try:
                 delete_phone(driver2, path_firefox, mail, password, driver_main_mail)
                 return [mail, password, mail_protect, "success"]
@@ -787,8 +787,9 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
                 try:
                     driver3 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
                     break
-                except:
-                    pass
+                except Exception as e:
+                    driver.save_full_page_screenshot("html/{}.png".format(mail_protect.split("@")[0]))
+                    logger.info(e)
 
             driver3.close()
             return [mail, password, mail_protect, "success"]
