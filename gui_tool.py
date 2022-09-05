@@ -31,6 +31,7 @@ class CantReceiveCodeFromEmailException(Exception):
     """Raise if can not receive code from email"""
     pass
 
+
 class CounldntSendTheCode(Exception):
     """Raise if can not receive code from email"""
     pass
@@ -45,7 +46,7 @@ class CantProcessBuyPhone(Exception):
     pass
 
 
-def create_driver(path_firefox: str = None) -> webdriver.Firefox:
+def create_driver(path_firefox: str = None, headless=False) -> webdriver.Firefox:
     options = Options()
     options.set_preference('intl.accept_languages', 'en-GB')
     options.set_preference("permissions.default.image", 2)
@@ -53,7 +54,7 @@ def create_driver(path_firefox: str = None) -> webdriver.Firefox:
     if path_firefox is None:
         path_firefox = PATH_FIREFOX
     options.binary_location = path_firefox  # "C:/Program Files/Mozilla Firefox/firefox.exe"
-    options.headless = False
+    options.headless = headless
     driver = webdriver.Firefox(options=options)
     return driver
 
@@ -429,14 +430,14 @@ def relogin(driver, mail, password):
     time.sleep(2)
 
 
-def setting_forward(driver, email_protect_text, mail, password, driver_main_mail, path_firefox):
+def setting_forward(driver, email_protect_text, mail, password, driver_main_mail, path_firefox, headless):
     go_to_page_forwarding(driver)
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
             (By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p")))
     except:
         driver.close()
-        driver = create_driver(path_firefox)
+        driver = create_driver(path_firefox, headless=headless)
         relogin(driver, mail, password)
         go_to_page_profile(driver)
         verify_by_mail(driver, email_protect_text, driver_main_mail)
@@ -613,6 +614,7 @@ def delete_phone(driver, path_firefox, mail, password, browser_):
 
 
 def create_main_mail_box(driver, main_mail, main_pass):
+    print("Start Init Mail box browser")
     driver.get(
         "https://passport.yandex.ru/auth?retpath=https%3A%2F%2Fmail.yandex.ru%2F&backpath=https%3A%2F%2Fmail.yandex.ru%2F%3Fnoretpath%3D1&from=mail&origin=hostroot_homer_auth_ru")
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-login"))).send_keys(main_mail)
@@ -637,7 +639,7 @@ def create_main_mail_box(driver, main_mail, main_pass):
     except:
         pass
 
-    print("Init Mail box browser")
+    print("End Init Mail box browser")
     return driver
 
 
@@ -723,13 +725,13 @@ def pass_screen_update(driver):
     print("Pass pass_screen_update")
 
 
-def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim):
+def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim, headless):
     mail_used = check_mail_used(mail)
     if mail_used == "Mail used":
         print("forwarded: ", mail)
         return [mail, password, mail_protect, "forwarded"]
 
-    driver = create_driver(path_firefox)
+    driver = create_driver(path_firefox, headless=headless)
     try:
         for i in range(50):
             try:
@@ -756,7 +758,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             enable_setting_forward_mail(driver, key_thuesim)
             for i in range(10):
                 try:
-                    driver0 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+                    driver0 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox, headless)
                     break
                 except CounldntSendTheCode as counldntSendTheCode:
                     return [mail, password, mail_protect, "CounldntSendTheCode"]
@@ -785,7 +787,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             enable_setting_forward_mail(driver, key_thuesim)
             for i in range(10):
                 try:
-                    driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+                    driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox, headless)
                     break
                 except CounldntSendTheCode as counldntSendTheCode:
                     return [mail, password, mail_protect, "CounldntSendTheCode"]
@@ -808,7 +810,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             enable_setting_forward_mail(driver, key_thuesim)
             for i in range(10):
                 try:
-                    driver3 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
+                    driver3 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox, headless)
                     break
                 except CounldntSendTheCode as counldntSendTheCode:
                     return [mail, password, mail_protect, "CounldntSendTheCode"]
@@ -872,8 +874,8 @@ def go_to_page_profile(driver):
 
 
 def process_all_mail(list_mails: list, num_processes: int = 1, main_mail: str = "", main_password: str = "",
-                     path_firefox: str = "", key_thuesim: str = ""):
-    driver_mail_mail = create_driver(path_firefox)
+                     path_firefox: str = "", key_thuesim: str = "", headless=False):
+    driver_mail_mail = create_driver(path_firefox, headless=headless)
     driver1 = create_main_mail_box(driver_mail_mail, main_mail, main_password)
 
     results_list = []
@@ -881,7 +883,7 @@ def process_all_mail(list_mails: list, num_processes: int = 1, main_mail: str = 
         futures = []
         for mail, password, mail_protect in list_mails:
             future = executor.submit(run_all_step_config_forward, mail, password, mail_protect, driver1, path_firefox,
-                                     key_thuesim)
+                                     key_thuesim, headless)
             futures.append(future)
 
         for future in futures:
@@ -951,7 +953,10 @@ class MyWindow:
         self.lbl7.place(x=50, y=350)
         self.FIREFOX_PATH = Entry(bd=3, width=30)
         self.FIREFOX_PATH.place(x=200, y=350)
-        self.FIREFOX_PATH.insert(0, config['path_firefox'])
+        try:
+            self.FIREFOX_PATH.insert(0, config['path_firefox'])
+        except:
+            pass
 
         # self.processBtn = Button(win, text='Process', command=self.main, state=DISABLED)
         self.processBtn = Button(win, text='Process', command=self.main)
@@ -1001,12 +1006,14 @@ class MyWindow:
         print("main_password: ", main_password)
         print("path_firefox: ", path_firefox)
         print("key_thuesim: ", key_thuesim)
+        print("headless: ", self.HEADLESS)
+
         main_mail = "nhanmailao@minh.live"
         main_password = "Team12345!"
         key_thuesim = "5ec165c3b6eae475"
         # path_firefox = "C:/Program Files/Mozilla Firefox/firefox.exe"
 
-        process_all_mail(self.emails, int(num_processes), main_mail, main_password, path_firefox, key_thuesim)
+        process_all_mail(self.emails, int(num_processes), main_mail, main_password, path_firefox, key_thuesim, headless=self.HEADLESS)
         # process_all_mail(self.emails, 4, main_mail, main_password)
 
 

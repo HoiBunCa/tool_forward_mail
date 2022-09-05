@@ -5,3 +5,4 @@ openpyxl==3.0.10
 requests_html==0.10.0
 imap-tools==0.56.0
 pyinstaller==5.1
+loguru
