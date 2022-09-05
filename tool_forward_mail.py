@@ -1,5 +1,6 @@
 import sqlite3
 
+import json
 import selenium
 from loguru import logger
 from concurrent.futures import ThreadPoolExecutor
@@ -27,6 +28,10 @@ class LoginFailException(Exception):
 
 
 class CantReceiveCodeFromEmailException(Exception):
+    """Raise if can not receive code from email"""
+    pass
+
+class CounldntSendTheCode(Exception):
     """Raise if can not receive code from email"""
     pass
 
@@ -76,7 +81,7 @@ def login_mail(driver, mail, password):
         WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "i0118"))).send_keys(password)
         WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idSIButton9"))).click()
     except Exception as e:
-        driver.save_full_page_screenshot("html/{}.png".format(mail.split("@")[0]))
+        # driver.save_full_page_screenshot("html/{}.png".format(mail.split("@")[0]))
         logger.exception(mail, e)
         raise LoginFailException("Login fail")
 
@@ -361,9 +366,13 @@ def verify_by_mail(driver, mail, browser_):
         mail)
     WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idSubmit_SAOTCS_SendCode"))).click()
     WebDriverWait(driver, 50).until(EC.presence_of_element_located((By.ID, "footer")))
-    wait_until_page_success(driver)
-    if "We couldn't send the code. Please try again." in driver.page_source:
-        raise CantReceiveCodeFromEmailException("We couldn't send the code. Please try again")
+    # driver.save_full_page_screenshot("html/{}.png".format("AAAAAAAA"))
+
+    for i in range(5):
+        time.sleep(1)
+        if "We couldn't send the code. Please try again." in driver.page_source:
+            driver.close()
+            raise CounldntSendTheCode("We couldn't send the code. Please try again")
 
     for i in range(50):
         time.sleep(2)
@@ -468,6 +477,7 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
 
     for i in range(20):
         try:
+            WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).clear()
             WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys(email_protect_text.split("@")[0])
             break
         except Exception as e:
@@ -617,8 +627,16 @@ def create_main_mail_box(driver, main_mail, main_pass):
     driver.get(driver.current_url.replace("inbox", "folder/10"))
     WebDriverWait(driver, 100).until(
         EC.visibility_of_element_located((By.XPATH, '//a[@href="#inbox" and contains(@class, "Folder")]')))
-    WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH,
-                                                                 '//div/div[contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
+    try:
+        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
+    except:
+        pass
+
+    try:
+        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Tài khoản Microsoft Mã bảo mật Vui lòng sử dụng mã bảo mật sau cho tài khoản Microsoft ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
+    except:
+        pass
+
     print("Init Mail box browser")
     return driver
 
@@ -706,10 +724,10 @@ def pass_screen_update(driver):
 
 
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim):
-    # mail_used = check_mail_used(mail)
-    # if mail_used == "Mail used":
-    #     print("forwarded: ", mail)
-    #     return [mail, password, mail_protect, "forwarded"]
+    mail_used = check_mail_used(mail)
+    if mail_used == "Mail used":
+        print("forwarded: ", mail)
+        return [mail, password, mail_protect, "forwarded"]
 
     driver = create_driver(path_firefox)
     try:
@@ -740,8 +758,11 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
                 try:
                     driver0 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
                     break
+                except CounldntSendTheCode as counldntSendTheCode:
+                    return [mail, password, mail_protect, "CounldntSendTheCode"]
+
                 except Exception as e:
-                    driver.save_full_page_screenshot("html/{}.png".format(mail_protect.split("@")[0]))
+                    # driver.save_full_page_screenshot("html/{}.png".format(mail_protect.split("@")[0]))
                     logger.exception(mail_protect, e)
 
             try:
@@ -766,9 +787,11 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
                 try:
                     driver2 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
                     break
+                except CounldntSendTheCode as counldntSendTheCode:
+                    return [mail, password, mail_protect, "CounldntSendTheCode"]
                 except Exception as e:
                     logger.exception(e)
-                    driver.save_full_page_screenshot("html/{}.png".format(mail_protect.split("@")[0]))
+                    # driver.save_full_page_screenshot("html/{}.png".format(mail_protect.split("@")[0]))
             try:
                 delete_phone(driver2, path_firefox, mail, password, driver_main_mail)
                 return [mail, password, mail_protect, "success"]
@@ -787,11 +810,15 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
                 try:
                     driver3 = setting_forward(driver, mail_protect, mail, password, driver_main_mail, path_firefox)
                     break
+                except CounldntSendTheCode as counldntSendTheCode:
+                    return [mail, password, mail_protect, "CounldntSendTheCode"]
                 except Exception as e:
-                    driver.save_full_page_screenshot("html/{}.png".format(mail_protect.split("@")[0]))
+                    # driver.save_full_page_screenshot("html/{}.png".format(mail_protect.split("@")[0]))
                     logger.info(e)
-
-            driver3.close()
+            try:
+                driver3.close()
+            except:
+                return [mail, password, mail_protect, "Exception Close firefox"]
             return [mail, password, mail_protect, "success"]
 
 
@@ -806,6 +833,8 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
         return [mail, password, mail_protect, "CantReceiveCodeFromEmailException"]
     except CantProcessBuyPhone as cantProcessBuyPhone:
         return [mail, password, mail_protect, "CantProcessBuyPhone"]
+    except CounldntSendTheCode as counldntSendTheCode:
+        return [mail, password, mail_protect, "CounldntSendTheCode"]
     except Exception as e:
         logger.info("UNKNOWN E: ", mail_protect)
         logger.exception(e)
@@ -817,6 +846,24 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             print("DONEEEEEEEEEE")
         except Exception as e:
             print("Exception final: ", e)
+
+        try:
+            driver0.close()
+            print("DONEEEEEEEEEE0000000000")
+        except Exception as e:
+            print("Exception final000000000: ", e)
+
+        try:
+            driver2.close()
+            print("DONEEEEEEEEEE22222222222")
+        except Exception as e:
+            print("Exception final22222222: ", e)
+
+        try:
+            driver3.close()
+            print("DONEEEEEEEEEE3333333333")
+        except Exception as e:
+            print("Exception final3333333: ", e)
 
 
 def go_to_page_profile(driver):
@@ -849,6 +896,9 @@ def process_all_mail(list_mails: list, num_processes: int = 1, main_mail: str = 
 
 class MyWindow:
     def __init__(self, win):
+        with open("config.json") as f:
+            config = json.load(f)
+
         self.pool = None
         self.win = win
         self.emails = []
@@ -870,16 +920,19 @@ class MyWindow:
         self.lbl2.place(x=50, y=100)
         self.MAIN_EMAIL = Entry(bd=3, width=30)
         self.MAIN_EMAIL.place(x=200, y=100)
+        self.MAIN_EMAIL.insert(0, config['main_mail'])
 
         self.lbl3 = Label(win, text='Password main mail')
         self.lbl3.place(x=50, y=150)
         self.MAIN_EMAIL_PASSWORD = Entry(bd=3, width=30)
         self.MAIN_EMAIL_PASSWORD.place(x=200, y=150)
+        self.MAIN_EMAIL_PASSWORD.insert(0, config['main_password'])
 
         self.lbl4 = Label(win, text='Key chothuesim')
         self.lbl4.place(x=50, y=200)
         self.API_KEY = Entry(bd=3, width=30)
         self.API_KEY.place(x=200, y=200)
+        self.API_KEY.insert(0, config['key_thuesim'])
 
         self.lbl5 = Label(win, text='Num thread')
         self.lbl5.place(x=50, y=250)
@@ -898,6 +951,7 @@ class MyWindow:
         self.lbl7.place(x=50, y=350)
         self.FIREFOX_PATH = Entry(bd=3, width=30)
         self.FIREFOX_PATH.place(x=200, y=350)
+        self.FIREFOX_PATH.insert(0, config['path_firefox'])
 
         # self.processBtn = Button(win, text='Process', command=self.main, state=DISABLED)
         self.processBtn = Button(win, text='Process', command=self.main)
