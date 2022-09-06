@@ -56,6 +56,7 @@ def create_driver(path_firefox: str = None, headless=False) -> webdriver.Firefox
     options.binary_location = path_firefox  # "C:/Program Files/Mozilla Firefox/firefox.exe"
     options.headless = headless
     driver = webdriver.Firefox(options=options)
+    driver.maximize_window()
     return driver
 
 
@@ -630,14 +631,14 @@ def create_main_mail_box(driver, main_mail, main_pass):
     WebDriverWait(driver, 100).until(
         EC.visibility_of_element_located((By.XPATH, '//a[@href="#inbox" and contains(@class, "Folder")]')))
     try:
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
+        WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
     except:
-        pass
+        print("Khong xuat hien mail tieng anh")
 
     try:
-        WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Tài khoản Microsoft Mã bảo mật Vui lòng sử dụng mã bảo mật sau cho tài khoản Microsoft ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
+        WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Tài khoản Microsoft Mã bảo mật Vui lòng sử dụng mã bảo mật sau cho tài khoản Microsoft ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
     except:
-        pass
+        print("Khong xuat hien mail tieng viet")
 
     print("End Init Mail box browser")
     return driver
