@@ -257,8 +257,7 @@ def go_to_page_forwarding(driver):
         WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')]")))
         skip_popup_adv(driver)
-        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH,
-                                                                    "/html/body/div[4]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div/button[10]/span/span/span"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'ms-Modal-scrollableContent scrollableContent')]/div/div[2]/div/button[10]/span/span/span"))).click()
         # WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p | //*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2])]")))
         skip_popup_adv(driver)
         WebDriverWait(driver, 50).until(
@@ -266,8 +265,7 @@ def go_to_page_forwarding(driver):
         driver.refresh()
         # btn Forwarding
         skip_popup_adv(driver)
-        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH,
-                                                                    "/html/body/div[4]/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div/button[10]/span/span/span"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'ms-Modal-scrollableContent scrollableContent')]/div/div[2]/div/button[10]/span/span/span"))).click()
         skip_popup_adv(driver)
         WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]")))
@@ -631,12 +629,12 @@ def create_main_mail_box(driver, main_mail, main_pass):
     WebDriverWait(driver, 100).until(
         EC.visibility_of_element_located((By.XPATH, '//a[@href="#inbox" and contains(@class, "Folder")]')))
     try:
-        WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
     except:
         print("Khong xuat hien mail tieng anh")
 
     try:
-        WebDriverWait(driver, 2).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Tài khoản Microsoft Mã bảo mật Vui lòng sử dụng mã bảo mật sau cho tài khoản Microsoft ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//div/div[contains(@aria-label, "Tài khoản Microsoft Mã bảo mật Vui lòng sử dụng mã bảo mật sau cho tài khoản Microsoft ")]/div/a/div/span/div/span/span[contains(@class, "mail-ui-Arrow")]'))).click()
     except:
         print("Khong xuat hien mail tieng viet")
 
