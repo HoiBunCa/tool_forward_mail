@@ -592,7 +592,8 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
     print("oooooooooooooooooooooooooo", email_protect_text)
 
     # todo: uncomment
-    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
+    # WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div/div/div[3]/div[3]/button[1]'))).click()
 
     insert_db(mail)
 
@@ -844,28 +845,28 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
     finally:
         try:
             driver.close()
-            print("DONEEEEEEEEEE")
+            # print("DONEEEEEEEEEE")
         except Exception as e:
-            print("Exception final: ", e)
-
+            # print("Exception final: ", e)
+            pass
         try:
             driver0.close()
-            print("DONEEEEEEEEEE0000000000")
+            # print("DONEEEEEEEEEE0000000000")
         except Exception as e:
-            print("Exception final000000000: ", e)
-
+            # print("Exception final000000000: ", e)
+            pass
         try:
             driver2.close()
-            print("DONEEEEEEEEEE22222222222")
+            # print("DONEEEEEEEEEE22222222222")
         except Exception as e:
-            print("Exception final22222222: ", e)
-
+            # print("Exception final22222222: ", e)
+            pass
         try:
             driver3.close()
-            print("DONEEEEEEEEEE3333333333")
+            # print("DONEEEEEEEEEE3333333333")
         except Exception as e:
-            print("Exception final3333333: ", e)
-
+            # print("Exception final3333333: ", e)
+            pass
 
 def go_to_page_profile(driver):
     driver.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
@@ -1007,9 +1008,9 @@ class MyWindow:
         print("key_thuesim: ", key_thuesim)
         print("headless: ", self.HEADLESS)
 
-        main_mail = "nhanmailao@minh.live"
-        main_password = "Team12345!"
-        key_thuesim = "5ec165c3b6eae475"
+        # main_mail = "nhanmailao@minh.live"
+        # main_password = "Team12345!"
+        # key_thuesim = "5ec165c3b6eae475"
         # path_firefox = "C:/Program Files/Mozilla Firefox/firefox.exe"
 
         process_all_mail(self.emails, int(num_processes), main_mail, main_password, path_firefox, key_thuesim, headless=self.HEADLESS)
