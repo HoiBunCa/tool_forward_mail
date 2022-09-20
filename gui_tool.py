@@ -119,6 +119,9 @@ def get_code_by_mail(driver, email):
             if_you_str = "If you"
             ind1 = emails[0].text.find(security_code_str)
             ind2 = emails[0].text.find(if_you_str)
+            if ind1 == -1:
+                ind1 = emails[0].text.find("Mã bảo mật: ")
+                ind2 = emails[0].text.find("Nếu bạn")
             code = emails[0].text[ind1 + len(security_code_str): ind2].strip()
             mask_mail_as_read(driver, code)
             return code
@@ -713,6 +716,7 @@ def process_after_login_case(driver):
 
 
 def pass_screen_update(driver):
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "footer")))
     if "As part of our effort to improve your experience across our consumer services, we're updating the Microsoft Services Agreement. We want to take this opportunity to notify you about this update." in driver.page_source:
         # truong hop login xong nhay den man hinh thong bao update
         WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iNext"))).click()
@@ -726,10 +730,10 @@ def pass_screen_update(driver):
 
 
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim, headless):
-    mail_used = check_mail_used(mail)
-    if mail_used == "Mail used":
-        print("forwarded: ", mail)
-        return [mail, password, mail_protect, "forwarded"]
+    # mail_used = check_mail_used(mail)
+    # if mail_used == "Mail used":
+    #     print("forwarded: ", mail)
+    #     return [mail, password, mail_protect, "forwarded"]
 
     driver = create_driver(path_firefox, headless=headless)
     try:
@@ -751,6 +755,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             WebDriverWait(driver, 100).until(
                 EC.element_to_be_clickable((By.XPATH, '//input[contains(@id, "iProof")]'))).click()
             reactive_mail(driver, driver_main_mail, mail)
+            pass_screen_update(driver)
             go_to_page_profile(driver)
             add_protect_mail(driver, mail_protect, driver_main_mail)
             go_to_page_profile(driver)
@@ -803,6 +808,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
 
         if case == 3:
             reactive_by_phone(driver, key_thuesim)
+            pass_screen_update(driver)
             go_to_page_profile(driver)
             add_protect_mail(driver, mail_protect, driver_main_mail)
             go_to_page_profile(driver)
