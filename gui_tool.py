@@ -109,8 +109,12 @@ def get_code_by_mail(driver, email):
     sent1 = "unread"
     sent2 = mail_n
     # f'//div[contains(@class, "ns-view-messages-item-inner ")]/div/div/div/div[contains(@aria-label, "unread") and contains(@aria-label, "bo**m")]'
-    sent_all = f'//div/div/div/div[contains(@aria-label, "{sent1}") and contains(@aria-label, "{sent2}")]'
+    sent_all = f'//div/div/div/div[contains(@aria-label, "{sent1}") and contains(@aria-label, "{sent2}") and contains(@aria-label, "Microsoft account Security code Please use the following security code for the Microsoft account")]'
+    sent_all_vn = f'//div/div/div/div[contains(@aria-label, "{sent1}") and contains(@aria-label, "{sent2}") and contains(@aria-label, "Tài khoản Microsoft Mã bảo mật Vui lòng sử dụng mã bảo mật sau")]'
     emails = driver.find_elements(By.XPATH, sent_all)
+    if type(emails) == list:
+        if len(emails) == 0:
+            emails = driver.find_elements(By.XPATH, sent_all_vn)
     if type(emails) == list:
         if len(emails) == 0:
             return None
@@ -123,6 +127,7 @@ def get_code_by_mail(driver, email):
                 ind1 = emails[0].text.find("Mã bảo mật: ")
                 ind2 = emails[0].text.find("Nếu bạn")
             code = emails[0].text[ind1 + len(security_code_str): ind2].strip()
+            print("INDEX1-2", ind1, ind2)
             mask_mail_as_read(driver, code)
             return code
     else:
