@@ -123,10 +123,11 @@ def get_code_by_mail(driver, email):
             if_you_str = "If you"
             ind1 = emails[0].text.find(security_code_str)
             ind2 = emails[0].text.find(if_you_str)
+            code = emails[0].text[ind1 + len(security_code_str): ind2].strip()
             if ind1 == -1:
                 ind1 = emails[0].text.find("Mã bảo mật: ")
                 ind2 = emails[0].text.find("Nếu bạn")
-            code = emails[0].text[ind1 + len(security_code_str): ind2].strip()
+                code = emails[0].text[ind1 + len("Mã bảo mật: "): ind2].strip()
             print("INDEX1-2", ind1, ind2)
             mask_mail_as_read(driver, code)
             return code
@@ -735,10 +736,10 @@ def pass_screen_update(driver):
 
 
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim, headless):
-    # mail_used = check_mail_used(mail)
-    # if mail_used == "Mail used":
-    #     print("forwarded: ", mail)
-    #     return [mail, password, mail_protect, "forwarded"]
+    mail_used = check_mail_used(mail)
+    if mail_used == "Mail used":
+        print("forwarded: ", mail)
+        return [mail, password, mail_protect, "forwarded"]
 
     driver = create_driver(path_firefox, headless=headless)
     try:
@@ -901,10 +902,11 @@ def process_all_mail(list_mails: list, num_processes: int = 1, main_mail: str = 
             print(future.result())
             results_list.append(future.result())
 
-    print("All task done.")
+
     print("results_list", results_list)
     results_df = pd.DataFrame(results_list, columns=["email", "password", "email_protect", "status"])
     results_df.to_excel("results_{}.xlsx".format(time.time()))
+    print("All task done.")
 
 
 class MyWindow:
