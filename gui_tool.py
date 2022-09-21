@@ -244,6 +244,39 @@ def reactive_by_phone(driver, key_chothuesim):
     WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "microsoft")))
 
 
+def active_by_phone(driver, key_chothuesim, mail, password):
+    try:
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iLandingViewAction"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//select/option[@value='VN']"))).click()
+        phone_num, phone_num_id = buy_phone(key_chothuesim)
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(phone_num)
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iCollectPhoneViewAction"))).click()
+        phone_code_verify = process_code_verify(driver, phone_num_id, 0, 0, key_chothuesim)
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys(phone_code_verify)
+        # WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iOttText"))).send_keys("12123")
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iVerifyPhoneViewAction"))).click()
+        # set new password
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iPassword"))).send_keys(password + "!")
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iPasswordViewAction"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iReviewProofsViewAction"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "EmailAddress"))).send_keys(mail)
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iCollectProofsViewAction"))).click()
+
+
+
+
+        driver.close()
+        return password + "!", "new password"
+    except Exception as e:
+        logger.info(mail, e)
+        return password, "Exception"
+
+
+
+
+
+
+
 def skip_popup_adv(driver):
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
@@ -652,6 +685,13 @@ def create_main_mail_box(driver, main_mail, main_pass):
     return driver
 
 
+def create_main_mail_box_test(driver):
+    print("Start Init Mail box browser")
+    driver.get("https://www.google.com/")
+
+    return driver
+
+
 def page_has_loaded(driver):
     try:
         page_state = driver.execute_script('return document.readyState;')
@@ -714,7 +754,8 @@ def process_after_login_case(driver):
     elif "and we'll send a verification code to your phone. After you enter the code, you can get back into your account." in driver.page_source:
         case = 3
         # truong hop bi khoa, can thue sdt de kich hoat lai, truong hop nay ko can xoa sdt sau khi setting mail
-
+    elif "we will ask you to verify your identity and change your password" in driver.page_source:
+        case = 3
     else:
         case = -1
     print("CASE: ", case)
@@ -787,7 +828,8 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
                 return [mail, password, mail_protect, "error delete phone"]
 
         if case == 1:
-            return [mail, password, mail_protect, "manual process"]
+            new_password, status = active_by_phone(driver, key_thuesim, mail_protect, password)
+            return [mail, new_password, mail_protect, status]
 
         if case == 2:
             go_to_page_profile(driver)
@@ -889,6 +931,7 @@ def process_all_mail(list_mails: list, num_processes: int = 1, main_mail: str = 
                      path_firefox: str = "", key_thuesim: str = "", headless=False):
     driver_mail_mail = create_driver(path_firefox, headless=headless)
     driver1 = create_main_mail_box(driver_mail_mail, main_mail, main_password)
+    # driver1 = create_main_mail_box_test(driver_mail_mail)
 
     results_list = []
     with ThreadPoolExecutor(max_workers=num_processes) as executor:
