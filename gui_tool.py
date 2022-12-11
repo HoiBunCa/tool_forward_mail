@@ -1,21 +1,17 @@
 import sqlite3
-
 import json
-import selenium
-from loguru import logger
-from concurrent.futures import ThreadPoolExecutor
-from tkinter import Label, NORMAL, DISABLED, Entry, Radiobutton, IntVar, Button
-from tkinter.filedialog import askopenfile
 import time
-
 import pandas as pd
 import requests
+
+from selenium.webdriver.common.keys import Keys
+from loguru import logger
+from concurrent.futures import ThreadPoolExecutor
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
-
 from tkinter import *
 from tkinter.filedialog import askopenfile
 
@@ -28,21 +24,27 @@ class LoginFailException(Exception):
 
 
 class CantReceiveCodeFromEmailException(Exception):
-    """Raise if can not receive code from email"""
+    """Raise if you can not receive code from email"""
     pass
 
 
 class CounldntSendTheCode(Exception):
-    """Raise if can not receive code from email"""
+    """Raise if you can not receive code from email"""
     pass
 
 
 class CantReceiveCodeFromApiBuyPhone(Exception):
-    """Raise if can not receive code from buy phone"""
+    """Raise if you can not receive code from buy phone"""
     pass
 
 
 class CantProcessBuyPhone(Exception):
+    """Raise if you can't buy phone from page buy phone"""
+    pass
+
+
+class NoSaveButton(Exception):
+    """Raise if forwarding page not have save button"""
     pass
 
 
@@ -102,8 +104,6 @@ def mask_mail_as_read(driver, code_of_mail):
 
 
 def get_code_by_mail(driver, email):
-    code = None
-    emails = None
     mail_s = email.split("@")[0]
     mail_n = mail_s[0] + mail_s[1] + "**" + mail_s[-1]
     sent1 = "unread"
@@ -117,6 +117,7 @@ def get_code_by_mail(driver, email):
             emails = driver.find_elements(By.XPATH, sent_all_vn)
     if type(emails) == list:
         if len(emails) == 0:
+            driver.find_element_by_tag_name('body').send_keys(Keys.F9)
             return None
         else:
             security_code_str = "Security code: "
@@ -166,7 +167,6 @@ def get_code_by_phone(bill_id, key_chothuesim):
 
 def process_code_verify(driver, bill_id, nums0=0, nums1=0, key_chothuesim=""):
     try:
-        time.sleep(2)
         phone_code_verify, reponse_code = get_code_by_phone(bill_id, key_chothuesim)
         if reponse_code == 0:
             return phone_code_verify
@@ -180,7 +180,6 @@ def process_code_verify(driver, bill_id, nums0=0, nums1=0, key_chothuesim=""):
                 except:
                     pass
                 WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//input"))).clear()
-                time.sleep(2)
                 phone_num1, bill_id1 = buy_phone(key_chothuesim)
                 WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//input"))).send_keys(
                     phone_num1)
@@ -196,7 +195,6 @@ def process_code_verify(driver, bill_id, nums0=0, nums1=0, key_chothuesim=""):
 
 def process_code_verify23(browser, bill_id, nums0=0, nums1=0, key_chothuesim=""):
     try:
-        time.sleep(2)
         phone_code_verify, reponse_code = get_code_by_phone(bill_id, key_chothuesim)
 
         if reponse_code == 0:
@@ -262,19 +260,11 @@ def active_by_phone(driver, key_chothuesim, mail, password):
         WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "EmailAddress"))).send_keys(mail)
         WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "iCollectProofsViewAction"))).click()
 
-
-
-
         driver.close()
         return password + "!", "new password"
     except Exception as e:
         logger.info(mail, e)
         return password, "Exception"
-
-
-
-
-
 
 
 def skip_popup_adv(driver):
@@ -299,7 +289,8 @@ def go_to_page_forwarding(driver):
         WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')]")))
         skip_popup_adv(driver)
-        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'ms-Modal-scrollableContent scrollableContent')]/div/div[2]/div/button[10]/span/span/span"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH,
+                                                                    "//div[contains(@class, 'ms-Modal-scrollableContent scrollableContent')]/div/div[2]/div/button[10]/span/span/span"))).click()
         # WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p | //*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2])]")))
         skip_popup_adv(driver)
         WebDriverWait(driver, 50).until(
@@ -307,7 +298,8 @@ def go_to_page_forwarding(driver):
         driver.refresh()
         # btn Forwarding
         skip_popup_adv(driver)
-        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//div[contains(@class, 'ms-Modal-scrollableContent scrollableContent')]/div/div[2]/div/button[10]/span/span/span"))).click()
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH,
+                                                                    "//div[contains(@class, 'ms-Modal-scrollableContent scrollableContent')]/div/div[2]/div/button[10]/span/span/span"))).click()
         skip_popup_adv(driver)
         WebDriverWait(driver, 50).until(
             EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]")))
@@ -332,13 +324,10 @@ def enable_setting_forward_mail(driver, key_chothuesim):
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
             (By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p")))
-        print(111111111111111)
-        print(222222222222222)
         pass
     except:
         # thue sdt
-        print(3333333333333333)
-        print(4444444444444444)
+
         driver.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
         for i in range(10):
             try:
@@ -498,7 +487,8 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
     except Exception as e:
         pass
 
-    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[1]/label/span'))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH,
+                                                                '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[1]/label/span'))).click()
 
     print("aaaaaaaaaaaaaaaaaaaaaa", email_protect_text)
     try:
@@ -508,9 +498,9 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
         pass
 
     WebDriverWait(driver, 50).until(
-        EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div[2]/label/span'))).click()
+        EC.element_to_be_clickable((By.XPATH,
+                                    '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div[2]/label/span'))).click()
 
-    print("bbbbbbbbbbbbbbbbbbbb", email_protect_text, email_protect_text.split("@")[0])
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
@@ -527,8 +517,6 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
             WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div[2]/label/span'))).click()
             logger.exception(email_protect_text)
 
-    print("cccccccccccccccccccc", email_protect_text)
-
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
@@ -538,7 +526,6 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
     WebDriverWait(driver, 50).until(
         EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("@")
 
-    print("ddddddddddddddddddddddd", email_protect_text)
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
@@ -548,7 +535,6 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
     WebDriverWait(driver, 50).until(
         EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("m")
 
-    print("eeeeeeeeeeeeeeeeeeee", email_protect_text)
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
@@ -601,7 +587,6 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
     WebDriverWait(driver, 50).until(
         EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("l")
 
-    print("kkkkkkkkkkkkkkkkkkkkkk", email_protect_text)
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
@@ -611,7 +596,6 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
     WebDriverWait(driver, 50).until(
         EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("i")
 
-    print("lllllllllllllllllllll", email_protect_text)
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
@@ -621,7 +605,6 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
     WebDriverWait(driver, 50).until(
         EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[2]/div/div/div/input'))).send_keys("v")
 
-    print("mmmmmmmmmmmmmmmmmmmmmmmm", email_protect_text)
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
@@ -635,8 +618,10 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
 
     # todo: uncomment
     # WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
-    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div/div/div[3]/div[3]/button[1]'))).click()
-
+    try:
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div/div/div[3]/div[3]/button[1]'))).click()
+    except:
+        raise NoSaveButton("No save button")
     insert_db(mail)
 
     print("SUCCESS add forwarding mail: ", email_protect_text)
@@ -660,8 +645,10 @@ def create_main_mail_box(driver, main_mail, main_pass):
     driver.get(
         "https://passport.yandex.ru/auth?retpath=https%3A%2F%2Fmail.yandex.ru%2F&backpath=https%3A%2F%2Fmail.yandex.ru%2F%3Fnoretpath%3D1&from=mail&origin=hostroot_homer_auth_ru")
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-login"))).send_keys(main_mail)
+    print(main_mail)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp-field-passwd"))).send_keys(main_pass)
+    print(main_pass)
     WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.ID, "passp:sign-in"))).click()
     WebDriverWait(driver, 100).until(
         EC.visibility_of_element_located((By.XPATH, '//a[@href="#inbox" and contains(@class, "Folder")]')))
@@ -844,6 +831,8 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
                     break
                 except CounldntSendTheCode as counldntSendTheCode:
                     return [mail, password, mail_protect, "CounldntSendTheCode"]
+                except NoSaveButton as noSaveButton:
+                    return [mail, password, mail_protect, "NoSaveButton"]
                 except Exception as e:
                     logger.exception(e)
                     # driver.save_full_page_screenshot("html/{}.png".format(mail_protect.split("@")[0]))
@@ -922,6 +911,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             # print("Exception final3333333: ", e)
             pass
 
+
 def go_to_page_profile(driver):
     driver.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
     wait_until_page_success(driver=driver)
@@ -944,7 +934,6 @@ def process_all_mail(list_mails: list, num_processes: int = 1, main_mail: str = 
         for future in futures:
             print(future.result())
             results_list.append(future.result())
-
 
     print("results_list", results_list)
     results_df = pd.DataFrame(results_list, columns=["email", "password", "email_protect", "status"])
@@ -1069,7 +1058,8 @@ class MyWindow:
         # key_thuesim = "5ec165c3b6eae475"
         # path_firefox = "C:/Program Files/Mozilla Firefox/firefox.exe"
 
-        process_all_mail(self.emails, int(num_processes), main_mail, main_password, path_firefox, key_thuesim, headless=self.HEADLESS)
+        process_all_mail(self.emails, int(num_processes), main_mail, main_password, path_firefox, key_thuesim,
+                         headless=self.HEADLESS)
         # process_all_mail(self.emails, 4, main_mail, main_password)
 
 
