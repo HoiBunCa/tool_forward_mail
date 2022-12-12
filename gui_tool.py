@@ -275,20 +275,24 @@ def skip_popup_adv(driver):
         pass
 
 
+def pass_sign_in(driver):
+    driver.get("https://outlook.live.com/mail/0/options/mail/layout")
+    skip_popup_adv(driver)
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable(
+        (By.XPATH, "//input[contains(@id, 'optionSearch')] | //a[contains(text(), 'Sign in')]")))
+    if 'Try premium' in driver.page_source:
+        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//a[text()='Sign in']"))).click()
+    skip_popup_adv(driver)
+    WebDriverWait(driver, 50).until(
+        EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')]")))
+    skip_popup_adv(driver)
+
+
 def go_to_page_forwarding(driver):
     print("go_to_page_forwarding")
     flag = 0
     try:
-        driver.get("https://outlook.live.com/mail/0/options/mail/layout")
-        skip_popup_adv(driver)
-        WebDriverWait(driver, 50).until(EC.element_to_be_clickable(
-            (By.XPATH, "//input[contains(@id, 'optionSearch')] | //a[contains(text(), 'Sign in')]")))
-        if 'Try premium' in driver.page_source:
-            WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//a[text()='Sign in']"))).click()
-        skip_popup_adv(driver)
-        WebDriverWait(driver, 50).until(
-            EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, 'optionSearch')]")))
-        skip_popup_adv(driver)
+        pass_sign_in(driver)
         WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH,
                                                                     "//div[contains(@class, 'ms-Modal-scrollableContent scrollableContent')]/div/div[2]/div/button[10]/span/span/span"))).click()
         # WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2]/div/div/p | //*[contains(@id, 'ModalFocusTrapZone')]/div[2]/div/div[3]/div[2])]")))
@@ -480,7 +484,6 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
     except Exception as e:
         pass
 
-    print("setting_forward: ", email_protect_text)
     try:
         WebDriverWait(driver, 1).until(EC.element_to_be_clickable(
             (By.XPATH, '//div[contains(@id,"ModalFocusTrapZone")]/div[2]/div/div[2]/div/div[3]/button[2]'))).click()
@@ -618,16 +621,21 @@ def setting_forward(driver, email_protect_text, mail, password, driver_main_mail
 
     # todo: uncomment
     # WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, "//*[text()='Save']"))).click()
+    # try:
+    #     WebDriverWait(driver, 15).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div/div/div[3]/div[3]/button[1]'))).click()
+    # except:
+    logger.info("No save button")
+    # setup Rule
     try:
-        WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div/div/div[3]/div[3]/button[1]'))).click()
+        WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div[4]/div/div/div/div[2]/div[2]/div/div[2]/div[2]/div/span[2]/button'))).click()
     except:
-        raise NoSaveButton("No save button")
+        pass
     insert_db(mail)
 
     print("SUCCESS add forwarding mail: ", email_protect_text)
     return driver
 
-
+#WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div[6]/div/div/div/div/div/ul[1]/li[1]/div/button[1]/span/div/div/div/div[2]/span[1]/span'))).click()
 def delete_phone(driver, path_firefox, mail, password, browser_):
     """Use when all step is done"""
     driver.get("https://account.live.com/names/manage?mkt=en-US&refd=account.microsoft.com&refp=profile")
@@ -763,6 +771,21 @@ def pass_screen_update(driver):
     print("Pass pass_screen_update")
 
 
+def config_rule(driver, email_protect_text, mail):
+    pass_sign_in(driver)
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[2]/div/button[4]'))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div[1]/button'))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div[2]/div/div/div/div[2]/div[2]/div/div[3]/div[2]/div/div/div/div/div[1]/div[2]/div/div/div/div/input'))).send_keys("fw")
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//div/div/div/div[2]/div[2]/div/div[3]/div[2]/div/div/div/div/div[2]/div[2]/div[2]/div/div/div/div/span[1]'))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//div/div/div/div/div/div/div[9]/button/span/span'))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//div/div/div/div[2]/div[2]/div/div[3]/div[2]/div/div/div/div/div[3]/div[2]/div[2]/div/div/div/div/span[1]'))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//html/body/div[3]/div[4]/div/div/div/div/div/div/div[3]/button[1]/span'))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div/div/div[3]/div[2]/div[2]/div/div[2]/div[1]/div/div[1]'))).send_keys(email_protect_text)
+    time.sleep(2)
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div[4]/div/div/div/div/div/ul/li[1]/div/div/div'))).click()
+    WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//div/div/div/div[2]/div[2]/div/div[3]/div[3]/button[1]/span/span'))).click()
+
+
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim, headless):
     mail_used = check_mail_used(mail)
     if mail_used == "Mail used":
@@ -819,6 +842,9 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
             return [mail, new_password, mail_protect, status]
 
         if case == 2:
+
+            config_rule(driver, mail_protect, mail)
+
             go_to_page_profile(driver)
             add_protect_mail(driver, mail_protect, driver_main_mail)
             go_to_page_profile(driver)
