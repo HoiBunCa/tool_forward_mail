@@ -84,6 +84,7 @@ def login_mail(driver, mail, password):
         WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idSIButton9"))).click()
         WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "i0118"))).send_keys(password)
         WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.ID, "idSIButton9"))).click()
+        time.sleep(2)
     except Exception as e:
         # driver.save_full_page_screenshot("html/{}.png".format(mail.split("@")[0]))
         logger.exception(mail, e)
@@ -101,6 +102,7 @@ def mask_mail_as_read(driver, code_of_mail):
             break
         except Exception as e:
             print("Exception when mask_as_read: ", code_of_mail, e)
+    time.sleep(5)
 
 
 def get_code_by_mail(driver, email):
@@ -781,10 +783,16 @@ def config_rule(driver, email_protect_text):
             WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//div/div/div/div[2]/div[2]/div/div[3]/div[2]/div/div/div/div/div[2]/div[2]/div[2]/div/div/div/div/span[1]'))).click()
             WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//div/div/div/div/div/div/div[9]/button/span/span'))).click()
             WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//div/div/div/div[2]/div[2]/div/div[3]/div[2]/div/div/div/div/div[3]/div[2]/div[2]/div/div/div/div/span[1]'))).click()
-            WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//html/body/div[3]/div[4]/div/div/div/div/div/div/div[3]/button[1]/span'))).click()
+            try:
+                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '//html/body/div[3]/div[5]/div/div/div/div/div/div/div[3]/button[1]/span'))).click()
+            except:
+                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '//html/body/div[3]/div[4]/div/div/div/div/div/div/div[3]/button[1]/span'))).click()
             WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//*[contains(@id, "ModalFocusTrapZone")]/div[2]/div/div[3]/div[2]/div/div/div/div/div[3]/div[2]/div[2]/div/div[2]/div[1]/div/div[1]'))).send_keys(email_protect_text)
             time.sleep(2)
-            WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div[4]/div/div/div/div/div/ul/li[1]/div/div/div'))).click()
+            try:
+                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div[5]/div/div/div/div/div/ul/li[1]/div/div/div'))).click()
+            except:
+                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[3]/div[4]/div/div/div/div/div/ul/li[1]/div/div/div'))).click()
             WebDriverWait(driver, 50).until(EC.element_to_be_clickable((By.XPATH, '//div/div/div/div[2]/div[2]/div/div[3]/div[3]/button[1]/span/span'))).click()
             break
         except:
@@ -792,7 +800,7 @@ def config_rule(driver, email_protect_text):
 
 def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, path_firefox, key_thuesim, headless):
     mail_used = check_mail_used(mail)
-    if mail_used == "Mail used":
+    if mail_used == "Mail usedd":
         print("forwarded: ", mail)
         return [mail, password, mail_protect, "forwarded"]
 
@@ -817,6 +825,7 @@ def run_all_step_config_forward(mail, password, mail_protect, driver_main_mail, 
                 EC.element_to_be_clickable((By.XPATH, '//input[contains(@id, "iProof")]'))).click()
             reactive_mail(driver, driver_main_mail, mail)
             pass_screen_update(driver)
+            config_rule(driver, mail_protect)
             go_to_page_profile(driver)
             add_protect_mail(driver, mail_protect, driver_main_mail)
             go_to_page_profile(driver)
